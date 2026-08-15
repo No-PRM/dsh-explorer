@@ -1,34 +1,39 @@
 {
   "name": "dsh-client-ui-filetree",
   "version": "0.1.0",
-  "description": "Collapsible real-time file-tree drawer for the dsh web GUI — 100% pure plugin (TS/TSX source, tsdown build).",
+  "description": "Collapsible real-time file-tree drawer for the dsh web GUI — pure plugin: floating toggle + right file-tree drawer (git decorations, media preview, drag-to-reference). Browser half; host half is dsh-filetree.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
-    "./client": "./lib/client.js",
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
     "./package.json": "./package.json"
   },
   "dsh": {
     "client": {
       "inject": [
         "@deepseek-ai/dsh-client-locale",
-        "@deepseek-ai/dsh-client-runtime"
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-slots"
       ],
       "platform": "web"
     }
   },
   "files": [
     "lib",
-    "src",
-    "scripts"
+    "README.md",
+    "README.zh-CN.md"
   ],
   "scripts": {
     "bundle": "tsdown",
     "watch": "tsdown --watch",
     "dev": "node scripts/dev.mjs",
     "typecheck": "tsc --noEmit",
-    "types": "node scripts/types.mjs"
+    "types": "node scripts/types.mjs",
+    "prepare": "npm run bundle && npm run types"
   },
   "license": "MIT",
   "peerDependencies": {
@@ -59,5 +64,10 @@
     "react": "^18.3.1",
     "tsdown": "^0.22.14",
     "typescript": "5.9"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   }
 }

@@ -23,6 +23,14 @@
 
 与真实网格列相比的取舍:抽屉**悬浮**在会话之上(会话不重排);会话保持宽度,抽屉盖住其右侧。
 
+## 官方形态(2026-08 dsh 插件规范)
+
+两个包均遵循官方插件契约:
+
+- **宿主** `dsh-filetree` —— 纯 Cordis entry(`name`/`inject`/`apply` + `main`/`exports["."]`),零运行时依赖;通过 profile 的 `cordis.patch.yml` insert 行安装(配置 HMR,免重启)。
+- **浏览器端** `dsh-client-ui-filetree` —— 声明 `dsh.client`(`platform: "web"`,inject 边含 locale/runtime/ui-slots),并在 `exports["./client"]` 导出构建产物(类型在 `lib/types/client/index.d.ts`);带 `prepare` 脚本,git 源安装时自动从 `src/` 构建 `lib/`。
+- 旧机制(`dsh.plugin.json`、`dsh registry`、repository-plugins)已于 2026-08 在上游移除,未使用。
+
 ## 安装(全新 profile)
 
 1. 把两个包拷进 `~/.dsh/profiles/<profile>/node_modules/` —— 浏览器包必须含**构建好的** `lib/client.js`。

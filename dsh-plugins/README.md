@@ -46,6 +46,14 @@ its right side.
 - Host: `GET http://127.0.0.1:3080/filetree/list?path=D:\\CodeWorkspaces\\测试\\create`
 - Boot graph: `GET /` → `window.__DSH_BOOT__` contains `dsh-client-ui-filetree`.
 
+## Official form (2026-08 dsh plugin spec)
+
+Both packages follow the official plugin contract:
+
+- **Host** `dsh-filetree` — pure Cordis entry (`name`/`inject`/`apply` + `main`/`exports["."]`), zero runtime deps; installed via a profile `cordis.patch.yml` insert row (config-HMR, no restart).
+- **Browser** `dsh-client-ui-filetree` — declares `dsh.client` (`platform: "web"`, inject edges for locale/runtime/ui-slots) and exports its built bundle at `exports["./client"]` (types at `lib/types/client/index.d.ts`); the package carries a `prepare` script so a git-source install builds `lib/` from `src/`.
+- Old mechanisms (`dsh.plugin.json`, `dsh registry`, repository-plugins) were removed upstream in 2026-08 and are not used.
+
 ## Install (fresh profile)
 
 1. Copy both packages into `~/.dsh/profiles/<profile>/node_modules/` — the
