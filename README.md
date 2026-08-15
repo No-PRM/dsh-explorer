@@ -35,6 +35,8 @@ dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/
 # restart dsh
 ```
 
+*(Dev machine: keep the junction + `cordis.patch.yml` insert-row setup — don't run the bundle commands in the same profile.)*
+
 Manual (dev, no restart): copy the two packages into the profile's `node_modules` and add them to its `cordis.patch.yml`:
 
 ```yaml

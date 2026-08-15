@@ -68,6 +68,8 @@ Both packages follow the official plugin contract:
 
 Both packages ship as official **bundles** (`dsh.bundle.patch` + built `lib/` in the repo, so a git-source install works with no build step).
 
+> **Dev machine?** The `dsh plugin add` channel is for fresh profiles / other users. On a checkout that already runs the **junction + `cordis.patch.yml` insert-row** dev setup, running these commands in the *same* profile would collide (same package names in `node_modules`, plus duplicated plugin rows) — keep one or the other per profile.
+
 **Manual (dev / no-restart):** copy both packages into `~/.dsh/profiles/<profile>/node_modules/` — the
    browser package must contain a **built** `lib/client.js`.
 2. Add both to that profile's `cordis.patch.yml`:

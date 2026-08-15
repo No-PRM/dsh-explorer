@@ -35,6 +35,8 @@ dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/
 # 重启 dsh
 ```
 
+*(开发机:保持 junction + `cordis.patch.yml` insert 行,别在同一 profile 跑 bundle 命令。)*
+
 手动方式(开发/免重启):把两个包拷进 profile 的 `node_modules`,再在它的 `cordis.patch.yml` 加:
 
 ```yaml
