@@ -30,7 +30,8 @@ plugin (no modifications inside the shipped dsh packages, survives upgrades).
 
 | File / dir | Purpose |
 | --- | --- |
-| `src/client/*.ts(x)` | TypeScript/TSX source, split by concern (entry, drawer, panel, tree, virtual, preview, icons, styles, fetch, locales, constants, types) |
+| `src/client/*.ts(x)` | TypeScript/TSX source, split by concern (entry, drawer, panel, tree, virtual, preview, icons, styles, fetch, locales, constants) |
+| `src/types/` | Shared structural types (single `index.ts`, imported by the client sources) |
 | `tsdown.config.ts` | tsdown (rolldown) build: emits `lib/client.js` in the exact `window.__ModuleLoader__.load({ id, factory })` format; react / jsx-runtime / primitives stay external (loader module table), everything else inlined. **oxc minify** (comments stripped, names mangled) + `process.env.NODE_ENV` baked to production |
 | `tsconfig.json` | strict, `jsx: react-jsx`, `allowImportingTsExtensions` |
 | `tsconfig.types.json` | declaration-only emit config for `npm run types` |

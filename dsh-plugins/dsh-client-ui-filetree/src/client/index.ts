@@ -1,5 +1,5 @@
 /** Plugin entry: registers the file-tree drawer into the shell overlay. */
-import type { ClientCtx } from './types.ts'
+import type { ClientCtx } from '../types/index.ts'
 import { ensureStyles } from './styles.ts'
 import { en, zh } from './locales.ts'
 import { FileTreeOverlay } from './drawer.tsx'

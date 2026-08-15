@@ -6,7 +6,7 @@ import {
   IconFolderOpen16,
   IconRefreshOutline16,
 } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { DirRecord, SearchResult, SelectorHook, SessionsState, Translate, WorkspacesState } from './types.ts'
+import type { DirRecord, SearchResult, SelectorHook, SessionsState, Translate, WorkspacesState } from '../types/index.ts'
 import {
   cls, dirnameOf, loadExpandedSet, persistExpanded, POLL_MS,
 } from './constants.ts'

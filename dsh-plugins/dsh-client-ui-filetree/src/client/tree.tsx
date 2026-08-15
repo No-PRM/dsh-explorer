@@ -7,7 +7,7 @@ import {
   IconFolderClose16,
   IconFolderOpen16,
 } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { ActiveGuide, DirRecord, Translate } from './types.ts'
+import type { ActiveGuide, DirRecord, Translate } from '../types/index.ts'
 import { basenameOf, cls, dirnameOf, formatSize, GUIDE_W, joinPath } from './constants.ts'
 import { styles } from './styles.ts'
 import { fileIconSpec, TypeIcon } from './icons.tsx'

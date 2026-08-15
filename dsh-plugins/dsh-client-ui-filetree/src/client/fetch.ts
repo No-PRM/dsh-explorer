@@ -1,4 +1,4 @@
-import type { DirRecord, GitStatus, SearchResult } from './types.ts'
+import type { DirRecord, GitStatus, SearchResult } from '../types/index.ts'
 import { joinPath } from './constants.ts'
 
 /** List one directory level through the host's /filetree/list. */

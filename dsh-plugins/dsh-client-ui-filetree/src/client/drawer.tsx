@@ -5,7 +5,7 @@ import {
   IconChevronRightOutline14,
   Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { SelectorHook, SessionsState, Translate, WorkspacesState } from './types.ts'
+import type { SelectorHook, SessionsState, Translate, WorkspacesState } from '../types/index.ts'
 import { clampDrawerWidth, PANEL_KEY, WIDTH_KEY } from './constants.ts'
 import { styles } from './styles.ts'
 import { FileTreePanel } from './panel.tsx'
