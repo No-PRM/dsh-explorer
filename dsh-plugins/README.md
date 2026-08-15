@@ -1,3 +1,5 @@
+[English](README.md) · [中文](README.zh-CN.md)
+
 # dsh-plugins — collapsible real-time file-tree sidebar for the DSH web GUI
 
 Two small packages that add a **可折叠文件树侧栏** (collapsible file-tree sidebar) to

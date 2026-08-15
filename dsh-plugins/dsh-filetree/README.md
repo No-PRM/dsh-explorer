@@ -1,3 +1,5 @@
+[English](README.md) · [中文](README.zh-CN.md)
+
 # dsh-filetree
 
 Host half of the collapsible real-time file-tree sidebar for the dsh web GUI.
