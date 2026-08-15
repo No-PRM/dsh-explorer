@@ -1,6 +1,5 @@
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
-  'section.title': '文件',
   'refresh': '刷新',
   'open': '打开文件树',
   'close': '关闭文件树',
@@ -28,7 +27,6 @@ export const zh = {
 
 /** English dictionary, checked complete against the zh key set. */
 export const en: Record<keyof typeof zh, string> = {
-  'section.title': 'Files',
   'refresh': 'Refresh',
   'open': 'Open file tree',
   'close': 'Close file tree',

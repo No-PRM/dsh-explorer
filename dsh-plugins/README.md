@@ -7,8 +7,8 @@ conversation column:
 
 | Package | Role |
 | --- | --- |
-| `dsh-filetree` | Host plugin: serves `/filetree/list` (one directory level, dirs-first, sizes/mtimes, hidden flags; parallel bounded stat pool) over the dsh web server. |
-| `dsh-client-ui-filetree` | Browser plugin: the floating >/< toggle (via `shell.overlay`) and the right file-tree panel (via `filetree.panel`) — current workspace folder, lazy collapsible tree, 1.2 s auto-refresh + focus refresh, manual refresh, close button, drag-to-resize, persisted open/expansion state. |
+| `dsh-filetree` | **Host plugin** (Node): serves the read-only `/filetree/*` JSON API over the dsh web server — directory listing, file read, recursive search, git status. **Zero dependencies.** |
+| `dsh-client-ui-filetree` | **Browser plugin** (TS/TSX): the floating >/< toggle and the right file-tree drawer — lazy **virtualized** tree, VS Code-style guides, search, CodeMirror preview, **git decorations** (M/A/U/D/R letters, filename tinting, dirty dots, deleted ghost rows, ignored dimming), `files.exclude` defaults. |
 
 ## How it is wired in — 100% pure plugin (no invasive patches)
 
@@ -16,17 +16,20 @@ The whole feature is a **drawer overlay** built entirely from the official plugi
 pipelines — **nothing inside the shipped dsh packages is modified**, so a dsh
 upgrade can never break it:
 
-1. `dsh-filetree-v2` (host): a standard cordis plugin mounted through the profile's
-   `cordis.patch.yml`; serves `/filetree/list`, `/filetree/search`, `/filetree/read`,
-   `/filetree/root`, `/filetree/gitstatus`.
+1. **Host** (`dsh-filetree`, deployed as `dsh-filetree-v4` in this profile): a standard
+   cordis plugin mounted through the profile's `cordis.patch.yml`; serves
+   `/filetree/list`, `/filetree/root`, `/filetree/read`, `/filetree/search`,
+   `/filetree/gitstatus`.
 2. `dsh-client-ui-filetree` (browser): a standard client plugin discovered via the
    `dsh.client` declaration. It registers **one entry into the existing
    `shell.overlay` list slot** (`id: "filetree.drawer"`) which renders:
    - the floating DeepSeek-blue round toggle (\> / \<)
    - the right **drawer**: an absolute overlay column (no layout involvement) with
      its own pointer-capture drag handle, the file tree (VS Code-style per-row
-     indent guides + hover highlight), search, expand/collapse-all, and click-
-     to-preview with line numbers
+     indent guides + hover highlight, virtualization), search, expand/collapse-all,
+     click-to-preview (CodeMirror 6), and **git decorations** — M/A/U/D/R letters
+     with filename tinting, folder dirty dots, deleted-file ghost rows, gitignored
+     dimming, VS Code `files.exclude` defaults
    - open state + width persist in `localStorage` (`dsh.filetree.panel`,
      `dsh.filetree.width`)
 
@@ -41,9 +44,39 @@ its right side.
 - Host: `GET http://127.0.0.1:3080/filetree/list?path=D:\\CodeWorkspaces\\测试\\create`
 - Boot graph: `GET /` → `window.__DSH_BOOT__` contains `dsh-client-ui-filetree`.
 
-## Sources
+## Install (fresh profile)
 
-Authoring copies live here; the installed copies are at
-`~/.dsh/profiles/web/node_modules/` (sync changes by copying `lib/*` over).
-The layout shell patch is an edit inside the installed `dsh-client-ui-layout`
-client bundle.
+1. Copy both packages into `~/.dsh/profiles/<profile>/node_modules/` — the
+   browser package must contain a **built** `lib/client.js`.
+2. Add both to that profile's `cordis.patch.yml`:
+
+   ```yaml
+   - insert:
+       - id: filetree
+         name: dsh-filetree-v4     # host — bump the suffix to deploy without restart
+       - id: ui-filetree
+         name: dsh-client-ui-filetree
+   ```
+
+3. Restart dsh (or use the versioned-name trick for the host so it activates
+   without a restart). **No `npm install` is needed by consumers** — the browser
+   bundle is self-contained; platform externals (react, primitives) come from the
+   dsh loader module table.
+
+## Live verify
+
+- Host: `GET http://127.0.0.1:3080/filetree/list?path=D:/CodeWorkspaces/测试/create`
+  and `GET http://127.0.0.1:3080/filetree/gitstatus?path=...`
+- Boot graph: `GET /` → `window.__DSH_BOOT__` contains `dsh-client-ui-filetree`.
+
+## Dev
+
+- Sources live in this directory; the installed copies are at
+  `~/.dsh/profiles/web/node_modules/` — the browser install is a **junction** to
+  the source (build → hot-reloads); the host is a copy.
+- Browser: `cd dsh-client-ui-filetree && npm run dev` (watch + sync),
+  `npm run bundle` (minified one-shot), `npm run types` (declarations to
+  `lib/types/`), `npm run typecheck`.
+- Host: edit `dsh-filetree/lib/index.js`, then copy to
+  `node_modules/dsh-filetree-v<N>/lib/index.js` with a bumped name for a
+  no-restart deploy.

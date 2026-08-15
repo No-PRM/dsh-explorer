@@ -1,5 +1,5 @@
 /** Pure-plugin drawer: floating toggle + overlay drawer shell + state owner. */
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, useRef, useState } from 'react'
 import {
   IconChevronLeftOutline14,
   IconChevronRightOutline14,

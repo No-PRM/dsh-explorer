@@ -429,7 +429,6 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
           : (
             <TreeList
               rows={rows}
-              hoverPath={hoverPath}
               onRowHover={setHoverPath}
               activeGuide={activeGuide}
               onToggle={toggleDir}
