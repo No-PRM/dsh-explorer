@@ -34,6 +34,7 @@ import type { Translate } from '../types/index.ts'
 import { styles } from './styles.ts'
 import { basenameOf } from './constants.ts'
 import { DRAG_MIME } from './tree.tsx'
+import { isOverComposer } from './chips.ts'
 import { fileIconSpec, TypeIcon } from './icons.tsx'
 import { IconArrowsDiff } from './tabler-icons.ts'
 
@@ -208,6 +209,8 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, o
       if (m.dragging && dragGhost.current) {
         dragGhost.current.style.left = e.clientX + 12 + 'px'
         dragGhost.current.style.top = e.clientY + 12 + 'px'
+        /* highlight the ghost while over the composer (a valid drop target) */
+        dragGhost.current.classList.toggle('over', isOverComposer(e.clientX, e.clientY))
       }
     }
     const onMouseUp = (e: MouseEvent) => {
@@ -223,7 +226,8 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, o
         if (pos !== null) view.dispatch({ selection: { anchor: pos } })
         return
       }
-      onReference?.(m.display, 'file')
+      /* fill only when released over the composer */
+      if (isOverComposer(e.clientX, e.clientY)) onReference?.(m.display, 'file')
     }
     document.addEventListener('mousedown', onMouseDown, true)
     document.addEventListener('mousemove', onMouseMove, true)

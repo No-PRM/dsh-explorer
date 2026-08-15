@@ -21,6 +21,15 @@ function composer(): HTMLTextAreaElement | null {
 }
 
 /** Render (or clear) the chip bar. `null`/empty removes it. */
+/** True when (x, y) falls on the composer textarea (with a small margin). */
+export function isOverComposer(x: number, y: number): boolean {
+  const ta = composer()
+  if (!ta) return false
+  const r = ta.getBoundingClientRect()
+  const m = 24
+  return x >= r.left - m && x <= r.right + m && y >= r.top - m && y <= r.bottom + m
+}
+
 export function updateChipBar(refs: RefChip[], onRemove: (rel: string) => void): void {
   if (container && !container.isConnected) container = null
   if (refs.length === 0) {
