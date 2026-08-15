@@ -1,6 +1,6 @@
 [English](README.md) · [中文](README.zh-CN.md)
 
-# dsh-filetree
+# dsh-explorer
 
 给 DeepSeek Harness 网页端加一个文件树侧栏。右侧边缘一个蓝色圆形按钮,点开就是当前工作区的文件抽屉 —— 懒加载加虚拟化,目录再大也不卡。
 
@@ -20,8 +20,8 @@
 
 | 包 | 干什么 |
 | --- | --- |
-| `dsh-filetree` | 宿主端(Node)。提供只读 `/filetree/*` 接口:列目录、读文件、搜索、git 状态、媒体流。零依赖。 |
-| `dsh-client-ui-filetree` | 浏览器端(TS/TSX)。按钮、抽屉、你能看到的一切。 |
+| `dsh-explorer` | 宿主端(Node)。提供只读 `/filetree/*` 接口:列目录、读文件、搜索、git 状态、媒体流。零依赖。 |
+| `dsh-client-ui-explorer` | 浏览器端(TS/TSX)。按钮、抽屉、你能看到的一切。 |
 
 两个都按官方插件契约写。接线和部署细节见 [dsh-plugins/README.zh-CN.md](dsh-plugins/README.zh-CN.md)。
 
@@ -32,9 +32,9 @@
 ```yaml
 - insert:
     - id: filetree
-      name: dsh-filetree-v7
+      name: dsh-explorer-v1
     - id: ui-filetree
-      name: dsh-client-ui-filetree
+      name: dsh-client-ui-explorer
 ```
 
 重启 dsh;不想重启就把宿主包名递增(v8、v9…)。浏览器 bundle 是自包含的,跑起来不需要 npm install。完整步骤看 [dsh-plugins/README.zh-CN.md](dsh-plugins/README.zh-CN.md)。
@@ -42,19 +42,19 @@
 ## 开发
 
 ```bash
-cd dsh-plugins/dsh-client-ui-filetree
+cd dsh-plugins/dsh-client-ui-explorer
 npm run dev        # watch + 同步到运行中的 profile
 npm run bundle     # 一次性压缩构建
 npm run types      # 生成 lib/types/*.d.ts
 npm run typecheck
 ```
 
-宿主改动写在 `dsh-plugins/dsh-filetree/lib/index.js`,拷进 profile 时包名递增即可免重启。
+宿主改动写在 `dsh-plugins/dsh-explorer/lib/index.js`,拷进 profile 时包名递增即可免重启。
 
 ## 文档
 
 - [dsh-plugins](dsh-plugins/README.zh-CN.md) — 架构、安装、部署([English](dsh-plugins/README.md))
-- [dsh-client-ui-filetree](dsh-plugins/dsh-client-ui-filetree/README.zh-CN.md)([English](dsh-plugins/dsh-client-ui-filetree/README.md))
-- [dsh-filetree](dsh-plugins/dsh-filetree/README.zh-CN.md)([English](dsh-plugins/dsh-filetree/README.md))
+- [dsh-client-ui-explorer](dsh-plugins/dsh-client-ui-explorer/README.zh-CN.md)([English](dsh-plugins/dsh-client-ui-explorer/README.md))
+- [dsh-explorer](dsh-plugins/dsh-explorer/README.zh-CN.md)([English](dsh-plugins/dsh-explorer/README.md))
 
 MIT

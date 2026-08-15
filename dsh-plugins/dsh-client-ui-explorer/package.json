@@ -1,7 +1,7 @@
 {
-  "name": "dsh-client-ui-filetree",
+  "name": "dsh-client-ui-explorer",
   "version": "0.1.0",
-  "description": "Collapsible real-time file-tree drawer for the dsh web GUI — pure plugin: floating toggle + right file-tree drawer (git decorations, media preview, drag-to-reference). Browser half; host half is dsh-filetree.",
+  "description": "Collapsible real-time file-tree drawer for the dsh web GUI — pure plugin: floating toggle + right file-tree drawer (git decorations, media preview, drag-to-reference). Browser half; host half is dsh-explorer.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {

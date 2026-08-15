@@ -8,7 +8,7 @@ import { defineConfig } from 'tsdown'
  * with react / jsx-runtime / primitives resolved through the injected require
  * (platform externals), and everything else inlined.
  */
-const ID = 'dsh-client-ui-filetree'
+const ID = 'dsh-client-ui-explorer'
 
 /** Resolved from the loader module table at runtime — never bundled. */
 const EXTERNALS = ['react', 'react/jsx-runtime', '@deepseek-ai/dsh-client-ui-primitives']

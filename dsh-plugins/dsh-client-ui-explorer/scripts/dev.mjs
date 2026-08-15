@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url'
 const here = fileURLToPath(new URL('.', import.meta.url))
 const root = join(here, '..')
 const built = join(root, 'lib', 'client.js')
-const install = 'C:\\Users\\Jian\\.dsh\\profiles\\web\\node_modules\\dsh-client-ui-filetree\\lib\\client.js'
+const install = 'C:\\Users\\Jian\\.dsh\\profiles\\web\\node_modules\\dsh-client-ui-explorer\\lib\\client.js'
 
 const npmCmd = process.platform === 'win32' ? 'C:\\Program Files\\nodejs\\npm.cmd' : 'npm'
 const child = spawn(npmCmd, ['run', 'watch'], { cwd: root, stdio: 'inherit' })

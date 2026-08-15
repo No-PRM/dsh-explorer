@@ -9,8 +9,8 @@ conversation column:
 
 | Package | Role |
 | --- | --- |
-| `dsh-filetree` | **Host plugin** (Node): serves the read-only `/filetree/*` JSON API over the dsh web server — directory listing, file read, recursive search, git status. **Zero dependencies.** |
-| `dsh-client-ui-filetree` | **Browser plugin** (TS/TSX): the floating >/< toggle and the right file-tree drawer — lazy **virtualized** tree, VS Code-style guides, search, CodeMirror preview, **git decorations** (M/A/U/D/R letters, filename tinting, dirty dots, deleted ghost rows, ignored dimming), `files.exclude` defaults. |
+| `dsh-explorer` | **Host plugin** (Node): serves the read-only `/filetree/*` JSON API over the dsh web server — directory listing, file read, recursive search, git status. **Zero dependencies.** |
+| `dsh-client-ui-explorer` | **Browser plugin** (TS/TSX): the floating >/< toggle and the right file-tree drawer — lazy **virtualized** tree, VS Code-style guides, search, CodeMirror preview, **git decorations** (M/A/U/D/R letters, filename tinting, dirty dots, deleted ghost rows, ignored dimming), `files.exclude` defaults. |
 
 ## How it is wired in — 100% pure plugin (no invasive patches)
 
@@ -18,11 +18,11 @@ The whole feature is a **drawer overlay** built entirely from the official plugi
 pipelines — **nothing inside the shipped dsh packages is modified**, so a dsh
 upgrade can never break it:
 
-1. **Host** (`dsh-filetree`, deployed as `dsh-filetree-v7` in this profile): a standard
+1. **Host** (`dsh-explorer`, deployed as `dsh-explorer-v1` in this profile): a standard
    cordis plugin mounted through the profile's `cordis.patch.yml`; serves
    `/filetree/list`, `/filetree/root`, `/filetree/read`, `/filetree/search`,
    `/filetree/gitstatus`.
-2. `dsh-client-ui-filetree` (browser): a standard client plugin discovered via the
+2. `dsh-client-ui-explorer` (browser): a standard client plugin discovered via the
    `dsh.client` declaration. It registers **one entry into the existing
    `shell.overlay` list slot** (`id: "filetree.drawer"`) which renders:
    - the floating DeepSeek-blue round toggle (\> / \<)
@@ -44,14 +44,14 @@ its right side.
 ## Live verify
 
 - Host: `GET http://127.0.0.1:3080/filetree/list?path=D:\\CodeWorkspaces\\测试\\create`
-- Boot graph: `GET /` → `window.__DSH_BOOT__` contains `dsh-client-ui-filetree`.
+- Boot graph: `GET /` → `window.__DSH_BOOT__` contains `dsh-client-ui-explorer`.
 
 ## Official form (2026-08 dsh plugin spec)
 
 Both packages follow the official plugin contract:
 
-- **Host** `dsh-filetree` — pure Cordis entry (`name`/`inject`/`apply` + `main`/`exports["."]`), zero runtime deps; installed via a profile `cordis.patch.yml` insert row (config-HMR, no restart).
-- **Browser** `dsh-client-ui-filetree` — declares `dsh.client` (`platform: "web"`, inject edges for locale/runtime/ui-slots) and exports its built bundle at `exports["./client"]` (types at `lib/types/client/index.d.ts`); the package carries a `prepare` script so a git-source install builds `lib/` from `src/`.
+- **Host** `dsh-explorer` — pure Cordis entry (`name`/`inject`/`apply` + `main`/`exports["."]`), zero runtime deps; installed via a profile `cordis.patch.yml` insert row (config-HMR, no restart).
+- **Browser** `dsh-client-ui-explorer` — declares `dsh.client` (`platform: "web"`, inject edges for locale/runtime/ui-slots) and exports its built bundle at `exports["./client"]` (types at `lib/types/client/index.d.ts`); the package carries a `prepare` script so a git-source install builds `lib/` from `src/`.
 - Old mechanisms (`dsh.plugin.json`, `dsh registry`, repository-plugins) were removed upstream in 2026-08 and are not used.
 
 ## Install (fresh profile)
@@ -63,9 +63,9 @@ Both packages follow the official plugin contract:
    ```yaml
    - insert:
        - id: filetree
-         name: dsh-filetree-v7     # host — bump the suffix to deploy without restart
+         name: dsh-explorer-v1     # host — bump the suffix to deploy without restart
        - id: ui-filetree
-         name: dsh-client-ui-filetree
+         name: dsh-client-ui-explorer
    ```
 
 3. Restart dsh (or use the versioned-name trick for the host so it activates
@@ -77,16 +77,16 @@ Both packages follow the official plugin contract:
 
 - Host: `GET http://127.0.0.1:3080/filetree/list?path=D:/CodeWorkspaces/测试/create`
   and `GET http://127.0.0.1:3080/filetree/gitstatus?path=...`
-- Boot graph: `GET /` → `window.__DSH_BOOT__` contains `dsh-client-ui-filetree`.
+- Boot graph: `GET /` → `window.__DSH_BOOT__` contains `dsh-client-ui-explorer`.
 
 ## Dev
 
 - Sources live in this directory; the installed copies are at
   `~/.dsh/profiles/web/node_modules/` — the browser install is a **junction** to
   the source (build → hot-reloads); the host is a copy.
-- Browser: `cd dsh-client-ui-filetree && npm run dev` (watch + sync),
+- Browser: `cd dsh-client-ui-explorer && npm run dev` (watch + sync),
   `npm run bundle` (minified one-shot), `npm run types` (declarations to
   `lib/types/`), `npm run typecheck`.
-- Host: edit `dsh-filetree/lib/index.js`, then copy to
-  `node_modules/dsh-filetree-v<N>/lib/index.js` with a bumped name for a
+- Host: edit `dsh-explorer/lib/index.js`, then copy to
+  `node_modules/dsh-explorer-v<N>/lib/index.js` with a bumped name for a
   no-restart deploy.

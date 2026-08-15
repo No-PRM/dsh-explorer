@@ -1,5 +1,5 @@
 {
-  "name": "dsh-filetree",
+  "name": "dsh-explorer",
   "version": "0.1.0",
   "description": "Host half of the file-tree sidebar: read-only /filetree/list · root · read · search · gitstatus · raw (JSON + media streaming) over the dsh web server.",
   "type": "module",

@@ -18,7 +18,7 @@ import { execFile } from "node:child_process";
  * facing: the route is a GUI-only read surface, so no prompt impact.
  */
 
-const name = "dsh-filetree";
+const name = "dsh-explorer";
 const inject = ["webServer"];
 const MAX_ENTRIES = 1000;
 /**

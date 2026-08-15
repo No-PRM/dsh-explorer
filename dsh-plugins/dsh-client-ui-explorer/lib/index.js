@@ -4,7 +4,7 @@
  * the host Loader; the browser half ships via exports["./client"], discovered
  * through the package.json dsh.client declaration.
  */
-export const name = 'dsh-client-ui-filetree'
+export const name = 'dsh-client-ui-explorer'
 
 /** Host plugin body — no host-side behavior for the file-tree panel plugin. */
 function apply() {}

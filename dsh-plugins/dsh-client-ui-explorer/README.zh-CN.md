@@ -1,6 +1,6 @@
 [English](README.md) · [中文](README.zh-CN.md)
 
-# dsh-client-ui-filetree
+# dsh-client-ui-explorer
 
 面向 dsh 网页端的**可折叠实时文件树抽屉** —— 100% 纯插件(不改动 dsh 自带包,可随升级存活)。
 
@@ -36,7 +36,7 @@
 | `lib/index.js` | Node 半部(空 apply;让包成为 loader 条目) |
 | `lib/types/*.d.ts` | **生成**的类型声明(`npm run types`) |
 
-`~/.dsh/profiles/web/node_modules/dsh-client-ui-filetree` 是指向本目录的 **junction**,所以构建即上线:client-HMR 链每 500ms 轮询所服务文件,约 1 秒内热刷新。
+`~/.dsh/profiles/web/node_modules/dsh-client-ui-explorer` 是指向本目录的 **junction**,所以构建即上线:client-HMR 链每 500ms 轮询所服务文件,约 1 秒内热刷新。
 
 ## 开发工作流
 
@@ -61,7 +61,7 @@ npm run typecheck  # tsc --noEmit
 
 必须安装两个包(见仓库级 `dsh-plugins/README.md`):
 
-1. 把本包(需带**构建好的** `lib/client.js`)和宿主 `dsh-filetree` 一起拷进 profile 的 `node_modules`。
+1. 把本包(需带**构建好的** `lib/client.js`)和宿主 `dsh-explorer` 一起拷进 profile 的 `node_modules`。
 2. 在 profile 的 `cordis.patch.yml` 中加两个 `insert` 条目。
 3. 重启 dsh(或递增宿主包名免重启部署)。
 

@@ -1,6 +1,6 @@
 [English](README.md) · [中文](README.zh-CN.md)
 
-# dsh-filetree
+# dsh-explorer
 
 Host half of the collapsible real-time file-tree sidebar for the dsh web GUI.
 Read-only JSON endpoints over the dsh web server — the browser client's only
@@ -31,13 +31,13 @@ Mounted as a cordis row in the web profile's `cordis.patch.yml`:
 ```yaml
 - insert:
     - id: filetree
-      name: dsh-filetree
+      name: dsh-explorer
 ```
 
-The package lives in `~/.dsh/profiles/web/node_modules/dsh-filetree`
+The package lives in `~/.dsh/profiles/web/node_modules/dsh-explorer`
 (resolution base of the profile).
 
 > **Live-deploy note:** host code changes do not hot-reload. To activate an
 > edit without restarting the app, bump the package name (e.g. copy to
-> `dsh-filetree-v8`, update the `name:` above) — the fresh module id loads
+> `dsh-explorer-v1`, update the `name:` above) — the fresh module id loads
 > on the next patch re-apply. A restart also works.

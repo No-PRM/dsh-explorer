@@ -1,6 +1,6 @@
 [English](README.md) · [中文](README.zh-CN.md)
 
-# dsh-filetree
+# dsh-explorer
 
 文件树侧栏的**宿主端**插件(基于 dsh web 服务器的只读 JSON 接口)—— 浏览器端唯一能读写本地文件系统与 git 的桥梁。
 
@@ -29,9 +29,9 @@
 ```yaml
 - insert:
     - id: filetree
-      name: dsh-filetree
+      name: dsh-explorer
 ```
 
-包位于 `~/.dsh/profiles/web/node_modules/dsh-filetree`(profile 的解析根目录)。
+包位于 `~/.dsh/profiles/web/node_modules/dsh-explorer`(profile 的解析根目录)。
 
-> **免重启部署提示:** 宿主代码改动不会热重载。要让改动无需重启即生效,把包名递增(例如复制为 `dsh-filetree-v8` 并更新上面的 `name:`),新的模块 id 会在下次补丁重放时加载;直接重启也可以。
+> **免重启部署提示:** 宿主代码改动不会热重载。要让改动无需重启即生效,把包名递增(例如复制为 `dsh-explorer-v1` 并更新上面的 `name:`),新的模块 id 会在下次补丁重放时加载;直接重启也可以。

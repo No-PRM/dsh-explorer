@@ -1,6 +1,6 @@
 [English](README.md) · [中文](README.zh-CN.md)
 
-# dsh-client-ui-filetree
+# dsh-client-ui-explorer
 
 Collapsible real-time file-tree **drawer** for the dsh web GUI — a 100% pure
 plugin (no modifications inside the shipped dsh packages, survives upgrades).
@@ -56,7 +56,7 @@ plugin (no modifications inside the shipped dsh packages, survives upgrades).
 | `lib/index.js` | Node half (no-op apply; makes the package a loader entry) |
 | `lib/types/*.d.ts` | **Generated** type declarations (`npm run types`) |
 
-The profile install at `~/.dsh/profiles/web/node_modules/dsh-client-ui-filetree`
+The profile install at `~/.dsh/profiles/web/node_modules/dsh-client-ui-explorer`
 is a **junction** to this directory, so building is all it takes to go live:
 the client-HMR chain stat-polls the served file and reloads within ~1 s.
 
@@ -84,7 +84,7 @@ npm run typecheck  # tsc --noEmit
 Two packages must be installed (see the repo-level `dsh-plugins/README.md`):
 
 1. Copy this package (with a **built** `lib/client.js`) and the host
-   `dsh-filetree` package into the profile's `node_modules`.
+   `dsh-explorer` package into the profile's `node_modules`.
 2. Add both to the profile's `cordis.patch.yml` (`insert` entries).
 3. Restart dsh (or bump the host package name for a no-restart deploy).
 

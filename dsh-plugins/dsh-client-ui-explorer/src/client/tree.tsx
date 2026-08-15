@@ -105,7 +105,7 @@ function relOf(rowPath: string, rootPath: string | null): string {
 }
 
 /** MIME we use to carry the drag payload (custom type is only readable on drop). */
-export const DRAG_MIME = 'application/x-dsh-filetree'
+export const DRAG_MIME = 'application/x-dsh-explorer'
 
 /** Start a drag of a tree row: carries the @-mention token (Codex convention)
  *  plus a structured payload for the drop handler. */
