@@ -23,6 +23,9 @@ export type FlatRow =
   | { key: string; path: string; depth: number; type: 'truncated' }
   | { key: string; path: string; depth: number; type: 'error'; message: string }
 
+/** VCS-internal directories hidden from the tree (VS Code files.exclude-like). */
+const HIDDEN_VCS_DIRS = new Set(['.git', '.svn', '.hg', 'CVS'])
+
 /** Git statuses of files deleted from the working tree (parent dir -> rows). */
 export type DeletedByDir = Map<string, Array<{ name: string; path: string }>>
 
@@ -52,6 +55,7 @@ export function flattenTree(
     const files: Array<{ name: string; path: string; size: number; hidden: boolean; deleted: boolean }> = []
     for (const e of rec.entries) {
       if (e.kind === 'dir') {
+        if (HIDDEN_VCS_DIRS.has(e.name)) continue
         visit(joinPath(path, e.name), e.name, depth + 1)
       } else {
         files.push({ name: e.name, path: joinPath(path, e.name), size: e.size, hidden: e.hidden, deleted: false })
