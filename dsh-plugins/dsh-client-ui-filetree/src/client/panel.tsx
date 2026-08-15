@@ -12,7 +12,7 @@ import {
 } from './constants.ts'
 import { styles } from './styles.ts'
 import { DRAG_MIME, flattenTree, TreeList, type DeletedByDir } from './tree.tsx'
-import { isOverComposer, setComposerTarget, updateChipBar } from './chips.ts'
+import { dragMarkedText, isDragMarked, isOverComposer, markDrag, setComposerTarget, updateChipBar } from './chips.ts'
 import { mediaKind, PreviewPane, type PreviewState } from './preview.tsx'
 import { fetchDir, bfsSearch, fetchGitStatus } from './fetch.ts'
 import { fileIconSpec, IconCollapseAll, IconExpandAll, TypeIcon } from './icons.tsx'
@@ -128,16 +128,16 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
   /* Drag & drop: tree rows carry the @-mention token; dropping anywhere
      inserts it into the chat composer (React-safe). */
   useEffect(() => {
-    const hasPayload = (e: DragEvent) => e.dataTransfer != null && Array.from(e.dataTransfer.types).includes(DRAG_MIME)
     /* live ghost for file/folder drags: the native drag image is suppressed,
        so we render the same .ftr-dragGhost pill as content drags and move it
-       with the pointer (blue while over the composer) */
+       with the pointer (blue while over the composer). Detection uses our drag
+       marker — custom dataTransfer types are invisible during dragover. */
     let dragGhostEl: HTMLDivElement | null = null
     const onDragOver = (e: DragEvent) => {
-      if (!hasPayload(e)) return
+      if (!isDragMarked()) return
       const over = isOverComposer(e.clientX, e.clientY)
       if (!dragGhostEl) {
-        const text = e.dataTransfer?.getData('text/plain')
+        const text = dragMarkedText()
         if (text) {
           dragGhostEl = document.createElement('div')
           dragGhostEl.className = 'ftr-dragGhost'
@@ -157,9 +157,10 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
       setComposerTarget(false)
       dragGhostEl?.remove()
       dragGhostEl = null
+      markDrag(null)
     }
     const onDrop = (e: DragEvent) => {
-      if (!hasPayload(e)) { clearTarget(); return }
+      if (!isDragMarked()) { clearTarget(); return }
       /* fill only when dropped into the composer */
       if (!isOverComposer(e.clientX, e.clientY)) { clearTarget(); return }
       e.preventDefault()

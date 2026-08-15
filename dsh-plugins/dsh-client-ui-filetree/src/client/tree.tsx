@@ -9,6 +9,7 @@ import {
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ActiveGuide, DirRecord, Translate } from '../types/index.ts'
 import { basenameOf, cls, dirnameOf, formatSize, GUIDE_W, joinPath } from './constants.ts'
+import { markDrag } from './chips.ts'
 import { styles } from './styles.ts'
 import { fileIconSpec, TypeIcon } from './icons.tsx'
 
@@ -113,6 +114,7 @@ function startRowDrag(e: React.DragEvent, path: string, rootPath: string | null,
   e.dataTransfer.effectAllowed = 'copy'
   e.dataTransfer.setData('text/plain', rel)
   e.dataTransfer.setData(DRAG_MIME, JSON.stringify({ path, rel, kind }))
+  markDrag(rel)
   /* Suppress the native drag image — the panel renders a LIVE ghost pill
      (same .ftr-dragGhost as content drags) that follows the pointer and can
      highlight blue over the composer. */

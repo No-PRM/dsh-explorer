@@ -37,6 +37,14 @@ export function setComposerTarget(on: boolean): void {
   ta.classList.toggle('ftr-composerTarget', on)
 }
 
+/** Marker for an in-flight file/folder drag. Chrome hides custom dataTransfer
+ *  types during dragover (they are only readable on drop), so we flag our own
+ *  drags with a plain variable and clear it on drop/dragend. */
+let dragMarker: string | null = null
+export function markDrag(rel: string | null): void { dragMarker = rel }
+export function isDragMarked(): boolean { return dragMarker !== null }
+export function dragMarkedText(): string | null { return dragMarker }
+
 export function updateChipBar(refs: RefChip[], onRemove: (rel: string) => void): void {
   if (container && !container.isConnected) container = null
   if (refs.length === 0) {
