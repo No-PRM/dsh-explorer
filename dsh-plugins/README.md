@@ -18,7 +18,7 @@ The whole feature is a **drawer overlay** built entirely from the official plugi
 pipelines — **nothing inside the shipped dsh packages is modified**, so a dsh
 upgrade can never break it:
 
-1. **Host** (`dsh-filetree`, deployed as `dsh-filetree-v4` in this profile): a standard
+1. **Host** (`dsh-filetree`, deployed as `dsh-filetree-v7` in this profile): a standard
    cordis plugin mounted through the profile's `cordis.patch.yml`; serves
    `/filetree/list`, `/filetree/root`, `/filetree/read`, `/filetree/search`,
    `/filetree/gitstatus`.
@@ -63,7 +63,7 @@ Both packages follow the official plugin contract:
    ```yaml
    - insert:
        - id: filetree
-         name: dsh-filetree-v4     # host — bump the suffix to deploy without restart
+         name: dsh-filetree-v7     # host — bump the suffix to deploy without restart
        - id: ui-filetree
          name: dsh-client-ui-filetree
    ```

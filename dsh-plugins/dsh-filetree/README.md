@@ -39,5 +39,5 @@ The package lives in `~/.dsh/profiles/web/node_modules/dsh-filetree`
 
 > **Live-deploy note:** host code changes do not hot-reload. To activate an
 > edit without restarting the app, bump the package name (e.g. copy to
-> `dsh-filetree-v5`, update the `name:` above) — the fresh module id loads
+> `dsh-filetree-v8`, update the `name:` above) — the fresh module id loads
 > on the next patch re-apply. A restart also works.

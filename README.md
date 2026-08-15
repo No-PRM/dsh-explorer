@@ -32,12 +32,12 @@ You need both halves. Copy the two packages into the profile's `node_modules`, t
 ```yaml
 - insert:
     - id: filetree
-      name: dsh-filetree-v5
+      name: dsh-filetree-v7
     - id: ui-filetree
       name: dsh-client-ui-filetree
 ```
 
-Restart dsh — or bump the host package name (v6, v7…) to avoid the restart. The browser bundle is self-contained; no `npm install` needed to run it. Full steps: [dsh-plugins/README.md](dsh-plugins/README.md).
+Restart dsh — or bump the host package name (v8, v9…) to avoid the restart. The browser bundle is self-contained; no `npm install` needed to run it. Full steps: [dsh-plugins/README.md](dsh-plugins/README.md).
 
 ## Development
 

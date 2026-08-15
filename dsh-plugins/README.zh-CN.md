@@ -13,7 +13,7 @@
 
 整个功能是**抽屉悬浮层**,完全基于官方插件管线构建 —— **没有修改任何 dsh 自带包**,dsh 升级永远坏不了:
 
-1. **宿主**(`dsh-filetree`,本 profile 部署为 `dsh-filetree-v4`):通过 profile 的 `cordis.patch.yml` 挂载的标准 cordis 插件;提供 `/filetree/list`、`/filetree/root`、`/filetree/read`、`/filetree/search`、`/filetree/gitstatus`。
+1. **宿主**(`dsh-filetree`,本 profile 部署为 `dsh-filetree-v7`):通过 profile 的 `cordis.patch.yml` 挂载的标准 cordis 插件;提供 `/filetree/list`、`/filetree/root`、`/filetree/read`、`/filetree/search`、`/filetree/gitstatus`。
 2. **浏览器端**(`dsh-client-ui-filetree`):通过 `dsh.client` 声明发现的标准客户端插件。向既有 `shell.overlay` 列表槽注册**一个条目**(`id: "filetree.drawer"`),渲染:
    - 悬浮 DeepSeek 蓝圆形开关(> / <)
    - 右侧**抽屉**:悬浮列(不参与布局)自带 pointer-capture 拖拽把手,文件树(VS Code 风格逐行层级线 + 悬浮高亮、虚拟化)、搜索、全部展开/折叠、点击预览(CodeMirror 6),以及 **git 装饰** —— M/A/U/D/R 字母 + 文件名着色、文件夹脏点、删除文件幽灵行、gitignore 变淡、VS Code `files.exclude` 默认值
@@ -39,7 +39,7 @@
    ```yaml
    - insert:
        - id: filetree
-         name: dsh-filetree-v4     # 宿主 —— 递增后缀即可免重启部署
+         name: dsh-filetree-v7     # 宿主 —— 递增后缀即可免重启部署
        - id: ui-filetree
          name: dsh-client-ui-filetree
    ```

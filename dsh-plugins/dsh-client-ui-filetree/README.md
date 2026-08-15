@@ -33,7 +33,8 @@ plugin (no modifications inside the shipped dsh packages, survives upgrades).
 - 512 KB cap + binary detection for text, 1.2 s live refresh
 - Expand-all / collapse-all (bounded: 150 dirs × depth 6), manual refresh
 - **Drag & drop**: drag any file/folder row into the chat composer — a plain
-  workspace-relative path is inserted at the caret and a removable reference
+  workspace-relative path is inserted at the caret (only a drop INTO the
+  composer fills; a ghost pill follows the pointer and turns blue over it) and a removable reference
   chip (file/folder icon + path + ×) appears above the composer, synced with
   the draft (auto-dismisses when the text is deleted or the message is sent)
 - **Drag selected code from the preview**: dropping a text selection inserts a

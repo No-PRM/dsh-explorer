@@ -32,12 +32,12 @@
 ```yaml
 - insert:
     - id: filetree
-      name: dsh-filetree-v5
+      name: dsh-filetree-v7
     - id: ui-filetree
       name: dsh-client-ui-filetree
 ```
 
-重启 dsh;不想重启就把宿主包名递增(v6、v7…)。浏览器 bundle 是自包含的,跑起来不需要 npm install。完整步骤看 [dsh-plugins/README.zh-CN.md](dsh-plugins/README.zh-CN.md)。
+重启 dsh;不想重启就把宿主包名递增(v8、v9…)。浏览器 bundle 是自包含的,跑起来不需要 npm install。完整步骤看 [dsh-plugins/README.zh-CN.md](dsh-plugins/README.zh-CN.md)。
 
 ## 开发
 

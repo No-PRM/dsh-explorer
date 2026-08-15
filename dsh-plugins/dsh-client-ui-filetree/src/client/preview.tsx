@@ -33,7 +33,6 @@ import { IconCloseOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { Translate } from '../types/index.ts'
 import { styles } from './styles.ts'
 import { basenameOf } from './constants.ts'
-import { DRAG_MIME } from './tree.tsx'
 import { isOverComposer, setComposerTarget } from './chips.ts'
 import { fileIconSpec, TypeIcon } from './icons.tsx'
 import { IconArrowsDiff } from './tabler-icons.ts'
@@ -104,7 +103,7 @@ export function mediaKind(path: string | null): MediaKind | null {
 }
 
 /** Git diff (HEAD vs working tree) rendered with @codemirror/merge. */
-function GitDiff({ path, dark, t }: { path: string; dark: boolean; t: Translate }) {
+function GitDiff({ path, dark }: { path: string; dark: boolean }) {
   const mountRef = useRef<HTMLDivElement>(null)
   const [data, setData] = useState<{ base: string; current: string } | null>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -264,7 +263,7 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, o
       body = <div className={styles.media}><iframe className={styles.mediaFrame} src={url} title={basenameOf(previewPath ?? '')} /></div>
     }
   } else if (diffMode && previewPath) {
-    body = <GitDiff path={previewPath} dark={dark} t={t} />
+    body = <GitDiff path={previewPath} dark={dark} />
   } else if (preview.binary) {
     body = <div className={styles.message}>{t('binaryFile')}</div>
   } else {
