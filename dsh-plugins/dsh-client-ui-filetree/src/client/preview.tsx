@@ -27,7 +27,7 @@ import { githubLight } from '@uiw/codemirror-theme-github'
 import { vscodeDark } from '@uiw/codemirror-theme-vscode'
 import type { Extension } from '@codemirror/state'
 import { EditorState } from '@codemirror/state'
-import { EditorView } from '@codemirror/view'
+import { EditorView, lineNumbers } from '@codemirror/view'
 import { MergeView } from '@codemirror/merge'
 import { IconCloseOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { Translate } from '../types/index.ts'
@@ -125,8 +125,8 @@ function GitDiff({ path, dark, t }: { path: string; dark: boolean; t: Translate 
     const lang = langFor(path)
     const theme = dark ? vscodeDark : githubLight
     const view = new MergeView({
-      a: { doc: data.base, extensions: [readOnly, theme, ...(lang ? [lang] : [])] },
-      b: { doc: data.current, extensions: [readOnly, theme, ...(lang ? [lang] : [])] },
+      a: { doc: data.base, extensions: [readOnly, theme, lineNumbers(), ...(lang ? [lang] : [])] },
+      b: { doc: data.current, extensions: [readOnly, theme, lineNumbers(), ...(lang ? [lang] : [])] },
       parent: mount,
       gutter: true,
       highlightChanges: true,
