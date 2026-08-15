@@ -23,6 +23,8 @@ export default defineConfig({
   // virtual-core ships unguarded `process.env.NODE_ENV` checks; the browser
   // has no `process`, so bake production in at build time.
   define: { 'process.env.NODE_ENV': '"production"' },
+  // oxc minify: strip comments, mangle names, compress lines
+  minify: true,
   dts: false,
   clean: false,
   sourcemap: true,
