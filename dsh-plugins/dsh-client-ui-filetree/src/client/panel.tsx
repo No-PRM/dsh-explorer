@@ -45,7 +45,7 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
   const [hoverPath, setHoverPath] = useState<string | null>(null)
   const [previewPath, setPreviewPath] = useState<string | null>(null)
   const [preview, setPreview] = useState<PreviewState | null>(null)
-  const [git, setGit] = useState<{ byPath: Map<string, string>; dirtyDirs: Set<string>; deletedByDir: DeletedByDir } | null>(null)
+  const [git, setGit] = useState<{ byPath: Map<string, string>; dirtyDirs: Set<string>; deletedByDir: DeletedByDir; ignored: Set<string> } | null>(null)
 
   const previewPathRef = useRef<string | null>(null)
   const dirsRef = useRef<Record<string, DirRecord>>({})
@@ -116,8 +116,16 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
     const byPath = new Map<string, string>()
     const dirtyDirs = new Set<string>()
     const deletedByDir: DeletedByDir = new Map()
+    const ignored = new Set<string>()
     for (const e of data.entries) {
       const path = norm(e.path)
+      /* ignored entries (status I) only feed the gray-out set — never badges,
+         dirty dots or ghost rows */
+      if (e.status === 'I') {
+        /* collapsed dir entries arrive with a trailing separator (dir/) */
+        ignored.add(path.replace(/[\\/]+$/, ''))
+        continue
+      }
       byPath.set(path, e.status)
       if (e.status === 'D') {
         const parent = dirnameOf(path)
@@ -132,7 +140,7 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
         d = dirnameOf(d)
       }
     }
-    setGit({ byPath, dirtyDirs, deletedByDir })
+    setGit({ byPath, dirtyDirs, deletedByDir, ignored })
   }, [])
 
   /* Load the root level once the current folder resolves. */
@@ -428,6 +436,7 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
               openPreview={openPreview}
               gitByPath={git?.byPath ?? EMPTY_GIT_MAP}
               dirtyDirs={git?.dirtyDirs ?? EMPTY_GIT_SET}
+              ignored={git?.ignored ?? EMPTY_GIT_SET}
               t={t}
             />
           )}

@@ -8,7 +8,7 @@ import {
   IconFolderOpen16,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ActiveGuide, DirRecord, Translate } from './types.ts'
-import { basenameOf, cls, formatSize, GUIDE_W, joinPath } from './constants.ts'
+import { basenameOf, cls, dirnameOf, formatSize, GUIDE_W, joinPath } from './constants.ts'
 import { styles } from './styles.ts'
 import { fileIconSpec, TypeIcon } from './icons.tsx'
 
@@ -76,6 +76,18 @@ export function flattenTree(
   return rows
 }
 
+/** True when the path itself or any ancestor dir is gitignored. */
+function isIgnoredPath(path: string, ignored: Set<string>): boolean {
+  let d = path
+  for (let i = 0; i < 16; i++) {
+    if (ignored.has(d)) return true
+    const next = dirnameOf(d)
+    if (next === d) break
+    d = next
+  }
+  return false
+}
+
 /** VS Code git-decoration letter → localized tooltip key + CSS class. */
 const GIT_META: Record<string, { key: string; cls: string }> = {
   M: { key: 'gitModified', cls: 'gitM' },
@@ -96,10 +108,11 @@ interface TreeRowProps {
   openPreview: (p: string) => void
   gitByPath: Map<string, string>
   dirtyDirs: Set<string>
+  ignored: Set<string>
   t: Translate
 }
 
-function TreeRow({ row, hoverPath, onRowHover, activeGuide, onToggle, openPreview, gitByPath, dirtyDirs, t }: TreeRowProps) {
+function TreeRow({ row, hoverPath, onRowHover, activeGuide, onToggle, openPreview, gitByPath, dirtyDirs, ignored, t }: TreeRowProps) {
   const sep = row.path.indexOf('\\') !== -1 ? '\\' : '/'
   /* VS Code guide rule: a row's guide at index k lights when that ancestor is
      the active node and this row is a strict descendant of it. */
@@ -119,7 +132,7 @@ function TreeRow({ row, hoverPath, onRowHover, activeGuide, onToggle, openPrevie
     return (
       <button
         type="button"
-        className={styles.row}
+        className={cls(styles.row, isIgnoredPath(row.path, ignored) && styles.rowIgnored)}
         style={{ paddingLeft }}
         title={row.path}
         onClick={() => onToggle(row.path)}
@@ -140,7 +153,7 @@ function TreeRow({ row, hoverPath, onRowHover, activeGuide, onToggle, openPrevie
     const meta = status ? GIT_META[status] : undefined
     return (
       <div
-        className={cls(styles.row, styles.fileRow, row.hidden && styles.hidden, row.deleted && styles.rowDeleted)}
+        className={cls(styles.row, styles.fileRow, row.hidden && styles.hidden, row.deleted && styles.rowDeleted, isIgnoredPath(row.path, ignored) && styles.rowIgnored)}
         style={{ paddingLeft }}
         title={row.path}
         onClick={row.deleted ? undefined : () => openPreview(row.path)}
@@ -178,11 +191,12 @@ export interface TreeListProps {
   openPreview: (p: string) => void
   gitByPath: Map<string, string>
   dirtyDirs: Set<string>
+  ignored: Set<string>
   t: Translate
 }
 
 /** Virtualized scrollable tree list. */
-export function TreeList({ rows, hoverPath, onRowHover, activeGuide, onToggle, openPreview, gitByPath, dirtyDirs, t }: TreeListProps) {
+export function TreeList({ rows, hoverPath, onRowHover, activeGuide, onToggle, openPreview, gitByPath, dirtyDirs, ignored, t }: TreeListProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const virtualizer = useVirtualizer({
     count: rows.length,
@@ -200,7 +214,7 @@ export function TreeList({ rows, hoverPath, onRowHover, activeGuide, onToggle, o
               key={row.key}
               style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: vi.size, transform: 'translateY(' + (4 + vi.start) + 'px)' }}
             >
-              <TreeRow row={row} hoverPath={hoverPath} onRowHover={onRowHover} activeGuide={activeGuide} onToggle={onToggle} openPreview={openPreview} gitByPath={gitByPath} dirtyDirs={dirtyDirs} t={t} />
+              <TreeRow row={row} hoverPath={hoverPath} onRowHover={onRowHover} activeGuide={activeGuide} onToggle={onToggle} openPreview={openPreview} gitByPath={gitByPath} dirtyDirs={dirtyDirs} ignored={ignored} t={t} />
             </div>
           )
         })}

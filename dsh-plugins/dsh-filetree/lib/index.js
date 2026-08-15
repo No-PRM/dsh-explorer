@@ -55,37 +55,56 @@ async function gitStatus(pathValue) {
   if (!root) return { git: false, reason: "no-root" };
   const cached = gitCache.get(root);
   if (cached && Date.now() - cached.at < GIT_CACHE_TTL) return cached.payload;
-  const out = await runGit(["-C", root, "--no-optional-locks", "status", "--porcelain=v1", "-z", "--untracked-files=all"]);
   const payload = { git: true, root };
-  if (out.ok && out.stdout) {
-    const entries = [];
-    const tokens = out.stdout.split("\0");
-    for (let i = 0; i < tokens.length; i++) {
-      const tok = tokens[i];
-      if (!tok) continue;
-      const x = tok[0] ?? " ";
-      const y = tok[1] ?? " ";
-      let rel = tok.slice(3);
-      if (x === "R" || x === "C") {
-        const next = tokens[i + 1];
-        if (next) {
-          rel = next;
-          i += 1;
+  const entries = [];
+  /* Pass 1 — tracked changes / untracked files. */
+  const out = await runGit(["-C", root, "--no-optional-locks", "status", "--porcelain=v1", "-z", "--untracked-files=all"]);
+  if (out.ok) {
+    if (out.stdout) {
+      const tokens = out.stdout.split("\0");
+      for (let i = 0; i < tokens.length; i++) {
+        const tok = tokens[i];
+        if (!tok) continue;
+        const x = tok[0] ?? " ";
+        const y = tok[1] ?? " ";
+        let rel = tok.slice(3);
+        if (x === "R" || x === "C") {
+          const next = tokens[i + 1];
+          if (next) {
+            rel = next;
+            i += 1;
+          }
+        }
+        if (!rel) continue;
+        const status = x !== " " && x !== "?" ? x : y !== " " && y !== "?" ? y : "U";
+        entries.push({ path: join(root, rel), status, x, y });
+        if (entries.length >= MAX_GIT_ENTRIES) {
+          payload.truncated = true;
+          break;
         }
       }
-      if (!rel) continue;
-      const status = x !== " " && x !== "?" ? x : y !== " " && y !== "?" ? y : "U";
-      entries.push({ path: join(root, rel), status, x, y });
-      if (entries.length >= MAX_GIT_ENTRIES) {
-        payload.truncated = true;
-        break;
+    }
+    /* Pass 2 — ignored entries (default mode collapses ignored dirs, so this
+       stays fast even with huge ignored trees like node_modules). */
+    if (!payload.truncated) {
+      const ign = await runGit(["-C", root, "--no-optional-locks", "status", "--ignored", "--porcelain=v1", "-z"]);
+      if (ign.ok && ign.stdout) {
+        for (const tok of ign.stdout.split("\0")) {
+          if (!tok || !tok.startsWith("!! ")) continue;
+          const rel = tok.slice(3);
+          if (!rel) continue;
+          entries.push({ path: join(root, rel), status: "I", x: "!", y: "!" });
+          if (entries.length >= MAX_GIT_ENTRIES) {
+            payload.truncated = true;
+            break;
+          }
+        }
       }
     }
     payload.entries = entries;
-  } else if (out.ok) {
-    payload.entries = [];
   } else {
     payload.error = { code: out.code ?? "git-status-failed" };
+    payload.entries = [];
   }
   gitCache.set(root, { at: Date.now(), payload });
   return payload;
