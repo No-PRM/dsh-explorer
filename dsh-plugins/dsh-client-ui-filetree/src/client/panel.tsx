@@ -74,14 +74,16 @@ function insertIntoComposer(text: string): boolean {
  *  or the line/field boundary). */
 function insertReference(rel: string): void {
   const ta = findComposerTextarea()
+  if (!ta) return
+  const at = ta.selectionStart ?? ta.value.length
+  const before = ta.value[at - 1]
   let text = rel
-  if (ta) {
-    const at = ta.selectionStart ?? ta.value.length
-    const before = ta.value[at - 1]
-    const after = ta.value[at]
-    if (at > 0 && before !== undefined && !/\s/.test(before)) text = ' ' + text
-    if (after !== undefined && !/\s/.test(after)) text = text + ' '
-  }
+  if (at > 0 && before !== undefined && !/\s/.test(before)) text = ' ' + text
+  /* Trailing space decided by what follows the insertion point: the char
+     at the caret (non-space → pad), or nothing at all (the reference lands at
+     the very end of the draft → pad so the next input doesn't glue). */
+  const following = ta.value[at]
+  if (following === undefined || !/\s/.test(following)) text = text + ' '
   insertIntoComposer(text)
 }
 
