@@ -113,10 +113,13 @@ function startRowDrag(e: React.DragEvent, path: string, rootPath: string | null,
   e.dataTransfer.effectAllowed = 'copy'
   e.dataTransfer.setData('text/plain', rel)
   e.dataTransfer.setData(DRAG_MIME, JSON.stringify({ path, rel, kind }))
-  const ghost = (e.currentTarget as HTMLElement).cloneNode(true) as HTMLElement
-  ghost.style.cssText = 'position:fixed;top:-1000px;left:-1000px;opacity:.85;pointer-events:none;z-index:9999'
+  /* compact pill drag image — same visual as the content-drag ghost (.ftr-dragGhost) */
+  const ghost = document.createElement('div')
+  ghost.className = 'ftr-dragGhost'
+  ghost.textContent = rel || basenameOf(path)
+  ghost.style.cssText = 'position:fixed;top:-1000px;left:-1000px'
   document.body.appendChild(ghost)
-  e.dataTransfer.setDragImage(ghost, 12, 12)
+  e.dataTransfer.setDragImage(ghost, 8, 8)
   setTimeout(() => { ghost.remove() }, 0)
 }
 
