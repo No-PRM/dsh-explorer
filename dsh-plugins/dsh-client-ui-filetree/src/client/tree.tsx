@@ -113,14 +113,14 @@ function startRowDrag(e: React.DragEvent, path: string, rootPath: string | null,
   e.dataTransfer.effectAllowed = 'copy'
   e.dataTransfer.setData('text/plain', rel)
   e.dataTransfer.setData(DRAG_MIME, JSON.stringify({ path, rel, kind }))
-  /* compact pill drag image — same visual as the content-drag ghost (.ftr-dragGhost) */
-  const ghost = document.createElement('div')
-  ghost.className = 'ftr-dragGhost'
-  ghost.textContent = rel || basenameOf(path)
-  ghost.style.cssText = 'position:fixed;top:-1000px;left:-1000px'
-  document.body.appendChild(ghost)
-  e.dataTransfer.setDragImage(ghost, 8, 8)
-  setTimeout(() => { ghost.remove() }, 0)
+  /* Suppress the native drag image — the panel renders a LIVE ghost pill
+     (same .ftr-dragGhost as content drags) that follows the pointer and can
+     highlight blue over the composer. */
+  const blank = document.createElement('div')
+  blank.style.cssText = 'position:fixed;top:-1000px;left:-1000px;width:1px;height:1px'
+  document.body.appendChild(blank)
+  e.dataTransfer.setDragImage(blank, 0, 0)
+  setTimeout(() => { blank.remove() }, 0)
 }
 
 /** VS Code git-decoration letter → localized tooltip key + CSS class. */

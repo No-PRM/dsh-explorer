@@ -209,8 +209,8 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, o
       if (m.dragging && dragGhost.current) {
         dragGhost.current.style.left = e.clientX + 12 + 'px'
         dragGhost.current.style.top = e.clientY + 12 + 'px'
-        /* signal the drop target on the composer itself (consistent with file drags) */
         setComposerTarget(isOverComposer(e.clientX, e.clientY))
+        dragGhost.current.classList.toggle('over', isOverComposer(e.clientX, e.clientY))
       }
     }
     const onMouseUp = (e: MouseEvent) => {

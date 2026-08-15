@@ -129,13 +129,35 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
      inserts it into the chat composer (React-safe). */
   useEffect(() => {
     const hasPayload = (e: DragEvent) => e.dataTransfer != null && Array.from(e.dataTransfer.types).includes(DRAG_MIME)
+    /* live ghost for file/folder drags: the native drag image is suppressed,
+       so we render the same .ftr-dragGhost pill as content drags and move it
+       with the pointer (blue while over the composer) */
+    let dragGhostEl: HTMLDivElement | null = null
     const onDragOver = (e: DragEvent) => {
       if (!hasPayload(e)) return
       const over = isOverComposer(e.clientX, e.clientY)
+      if (!dragGhostEl) {
+        const text = e.dataTransfer?.getData('text/plain')
+        if (text) {
+          dragGhostEl = document.createElement('div')
+          dragGhostEl.className = 'ftr-dragGhost'
+          dragGhostEl.textContent = text
+          document.body.appendChild(dragGhostEl)
+        }
+      }
+      if (dragGhostEl) {
+        dragGhostEl.style.left = e.clientX + 12 + 'px'
+        dragGhostEl.style.top = e.clientY + 12 + 'px'
+        dragGhostEl.classList.toggle('over', over)
+      }
       setComposerTarget(over)
       if (over) e.preventDefault()
     }
-    const clearTarget = () => setComposerTarget(false)
+    const clearTarget = () => {
+      setComposerTarget(false)
+      dragGhostEl?.remove()
+      dragGhostEl = null
+    }
     const onDrop = (e: DragEvent) => {
       if (!hasPayload(e)) { clearTarget(); return }
       /* fill only when dropped into the composer */
