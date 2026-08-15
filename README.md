@@ -6,6 +6,8 @@ A file-tree sidebar for the DeepSeek Harness web UI. A blue round button on the 
 
 The plugins only add UI and a few read-only routes. Nothing in the shipped dsh packages is touched, so dsh updates shouldn't break anything.
 
+![dsh-explorer file tree](assets/screenshot.png)
+
 ## What you get
 
 - A right-side drawer (drag the edge to resize) with a floating blue toggle; open state and width are remembered

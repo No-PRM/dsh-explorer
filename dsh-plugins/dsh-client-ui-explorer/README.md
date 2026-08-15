@@ -5,6 +5,8 @@
 Collapsible real-time file-tree **drawer** for the dsh web GUI — a 100% pure
 plugin (no modifications inside the shipped dsh packages, survives upgrades).
 
+![dsh-explorer file tree](../../assets/screenshot.png)
+
 ## Features
 
 - Floating DeepSeek-blue round toggle (\> / \<) on the right-middle edge
