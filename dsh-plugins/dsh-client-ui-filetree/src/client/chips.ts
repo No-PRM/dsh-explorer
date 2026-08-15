@@ -30,6 +30,13 @@ export function isOverComposer(x: number, y: number): boolean {
   return x >= r.left - m && x <= r.right + m && y >= r.top - m && y <= r.bottom + m
 }
 
+/** Toggle a highlight ring on the composer to signal it is a drop target. */
+export function setComposerTarget(on: boolean): void {
+  const ta = composer()
+  if (!ta) return
+  ta.classList.toggle('ftr-composerTarget', on)
+}
+
 export function updateChipBar(refs: RefChip[], onRemove: (rel: string) => void): void {
   if (container && !container.isConnected) container = null
   if (refs.length === 0) {

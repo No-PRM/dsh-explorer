@@ -12,7 +12,7 @@ import {
 } from './constants.ts'
 import { styles } from './styles.ts'
 import { DRAG_MIME, flattenTree, TreeList, type DeletedByDir } from './tree.tsx'
-import { isOverComposer, updateChipBar } from './chips.ts'
+import { isOverComposer, setComposerTarget, updateChipBar } from './chips.ts'
 import { mediaKind, PreviewPane, type PreviewState } from './preview.tsx'
 import { fetchDir, bfsSearch, fetchGitStatus } from './fetch.ts'
 import { fileIconSpec, IconCollapseAll, IconExpandAll, TypeIcon } from './icons.tsx'
@@ -129,12 +129,19 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
      inserts it into the chat composer (React-safe). */
   useEffect(() => {
     const hasPayload = (e: DragEvent) => e.dataTransfer != null && Array.from(e.dataTransfer.types).includes(DRAG_MIME)
-    const onDragOver = (e: DragEvent) => { if (hasPayload(e) && isOverComposer(e.clientX, e.clientY)) e.preventDefault() }
-    const onDrop = (e: DragEvent) => {
+    const onDragOver = (e: DragEvent) => {
       if (!hasPayload(e)) return
+      const over = isOverComposer(e.clientX, e.clientY)
+      setComposerTarget(over)
+      if (over) e.preventDefault()
+    }
+    const clearTarget = () => setComposerTarget(false)
+    const onDrop = (e: DragEvent) => {
+      if (!hasPayload(e)) { clearTarget(); return }
       /* fill only when dropped into the composer */
-      if (!isOverComposer(e.clientX, e.clientY)) return
+      if (!isOverComposer(e.clientX, e.clientY)) { clearTarget(); return }
       e.preventDefault()
+      clearTarget()
       const raw = e.dataTransfer?.getData(DRAG_MIME)
       if (!raw) return
       let payload: { path?: string; rel?: string; kind?: string }
@@ -147,9 +154,11 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
     }
     document.addEventListener('dragover', onDragOver)
     document.addEventListener('drop', onDrop)
+    document.addEventListener('dragend', clearTarget)
     return () => {
       document.removeEventListener('dragover', onDragOver)
       document.removeEventListener('drop', onDrop)
+      document.removeEventListener('dragend', clearTarget)
     }
   }, [])
 
