@@ -1,5 +1,5 @@
 /** File content preview: header + CodeMirror 6 read-only code viewer. */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import CodeMirror from '@uiw/react-codemirror'
 import { StreamLanguage } from '@codemirror/language'
 import { search } from '@codemirror/search'
@@ -26,11 +26,15 @@ import { dockerFile } from '@codemirror/legacy-modes/mode/dockerfile'
 import { githubLight } from '@uiw/codemirror-theme-github'
 import { vscodeDark } from '@uiw/codemirror-theme-vscode'
 import type { Extension } from '@codemirror/state'
+import { EditorState } from '@codemirror/state'
+import { EditorView } from '@codemirror/view'
+import { MergeView } from '@codemirror/merge'
 import { IconCloseOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { Translate } from '../types/index.ts'
 import { styles } from './styles.ts'
 import { basenameOf } from './constants.ts'
 import { fileIconSpec, TypeIcon } from './icons.tsx'
+import { IconArrowsDiff } from './tabler-icons.ts'
 
 export type MediaKind = 'image' | 'video' | 'audio' | 'pdf'
 
@@ -45,6 +49,8 @@ export interface PreviewPaneProps {
   preview: PreviewState | null
   relPath: (p: string) => string
   onClose: () => void
+  /** File has a git status (so a HEAD diff exists to compare). */
+  canDiff: boolean
   t: Translate
 }
 
@@ -93,7 +99,49 @@ export function mediaKind(path: string | null): MediaKind | null {
   return null
 }
 
-export function PreviewPane({ previewPath, preview, relPath, onClose, t }: PreviewPaneProps) {
+/** Git diff (HEAD vs working tree) rendered with @codemirror/merge. */
+function GitDiff({ path, dark, t }: { path: string; dark: boolean; t: Translate }) {
+  const mountRef = useRef<HTMLDivElement>(null)
+  const [data, setData] = useState<{ base: string; current: string } | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    fetch('/filetree/gitdiff?path=' + encodeURIComponent(path), { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!alive) return
+        if (j && j.ok === true && j.git === true) setData({ base: j.base ?? '', current: j.current ?? '' })
+        else setErr(j?.error?.message || 'diff failed')
+      })
+      .catch(() => { if (alive) setErr('diff failed') })
+    return () => { alive = false }
+  }, [path])
+
+  useEffect(() => {
+    const mount = mountRef.current
+    if (!mount || !data) return
+    const readOnly: Extension = [EditorState.readOnly.of(true), EditorView.editable.of(false)]
+    const lang = langFor(path)
+    const theme = dark ? vscodeDark : githubLight
+    const view = new MergeView({
+      a: { doc: data.base, extensions: [readOnly, theme, ...(lang ? [lang] : [])] },
+      b: { doc: data.current, extensions: [readOnly, theme, ...(lang ? [lang] : [])] },
+      parent: mount,
+      gutter: true,
+      highlightChanges: true,
+      collapseUnchanged: { margin: 3, minSize: 8 },
+      orientation: 'a-b',
+    })
+    return () => { view.destroy() }
+  }, [data, dark, path])
+
+  if (err) return <div className={styles.error}>{err}</div>
+  return <div ref={mountRef} className={styles.diffWrap} />
+}
+
+export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, t }: PreviewPaneProps) {
+  const [diffMode, setDiffMode] = useState(false)
   /* Follow the app's light/dark palette (body attribute flips on theme change). */
   const [dark, setDark] = useState(() => typeof document !== 'undefined' && document.body.hasAttribute('data-ds-dark-theme'))
   useEffect(() => {
@@ -107,6 +155,8 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, t }: Previ
      which would wipe the dynamically-installed search extension and close the
      Ctrl+F panel on the next poll tick. Memoize so reconfigure only fires when
      the opened file changes. */
+  useEffect(() => { setDiffMode(false) }, [previewPath])
+
   const lang = useMemo(() => langFor(previewPath), [previewPath])
   /* Install the search extension statically with the panel at the top, matching
      the VS Code find-widget position (basicSetup only ships the keymap). */
@@ -130,6 +180,8 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, t }: Previ
     } else {
       body = <div className={styles.media}><iframe className={styles.mediaFrame} src={url} title={basenameOf(previewPath ?? '')} /></div>
     }
+  } else if (diffMode && previewPath) {
+    body = <GitDiff path={previewPath} dark={dark} t={t} />
   } else if (preview.binary) {
     body = <div className={styles.message}>{t('binaryFile')}</div>
   } else {
@@ -157,6 +209,17 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, t }: Previ
         {previewPath ? <TypeIcon spec={fileIconSpec(basenameOf(previewPath))} size={16} /> : null}
         <span className={styles.previewName} title={previewPath ?? undefined}>{previewPath ? basenameOf(previewPath) : ''}</span>
         {previewPath ? <span className={styles.previewPath}>{relPath(previewPath)}</span> : null}
+        {canDiff ? (
+          <button
+            type="button"
+            className={styles.iconButton}
+            aria-label={diffMode ? t('diffBack') : t('diff')}
+            title={diffMode ? t('diffBack') : t('diff')}
+            onClick={() => setDiffMode((m) => !m)}
+          >
+            <IconArrowsDiff size={15} />
+          </button>
+        ) : null}
         <button type="button" className={styles.iconButton} aria-label={t('closePreview')} title={t('closePreview')} onClick={onClose}>
           <IconCloseOutline16 size={14} />
         </button>

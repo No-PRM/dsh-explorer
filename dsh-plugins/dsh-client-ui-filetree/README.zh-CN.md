@@ -14,6 +14,7 @@
 - **git 装饰**(VS Code 风格):M/A/U/D/R 状态字母 + 文件名着色、文件夹脏点、已删除文件显示为删除线幽灵行、gitignore 文件/目录变淡 —— 数据来自宿主 `/filetree/gitstatus`,约 3 秒轮询
 - VS Code `files.exclude` 默认值:`.git`/`.svn`/`.hg`/`CVS` 和 `.DS_Store`/`Thumbs.db` 隐藏;`node_modules` 仍显示
 - 搜索框(宿主 `/filetree/search`,失败时回退到客户端 BFS),跳过 `.git`/node_modules,点击结果可预览
+- **git 对照**:有改动的文件在预览头部有 *diff* 按钮 —— HEAD 与工作区**并排对照**(@codemirror/merge,未变区域折叠、变更行标注)
 - 点击文件 → **预览**:文本走 **CodeMirror 6**(行号、选择/复制、主题、虚拟化、Ctrl+F 的 VS Code 风格悬浮查找条);**媒体原生渲染** —— 图片/视频/音频/PDF 通过宿主 `/filetree/raw` 流式加载(Range 断点支持,视频可拖动进度)
 - 文本 512 KB 上限 + 二进制检测,1.2 s 实时刷新
 - 全部展开 / 全部折叠(有界:150 目录 × 深度 6)、手动刷新

@@ -54,6 +54,7 @@
     "@codemirror/lang-sql": "^6.10.0",
     "@codemirror/language": "^6.12.4",
     "@codemirror/legacy-modes": "^6.5.3",
+    "@codemirror/merge": "^6.12.2",
     "@deepseek-ai/dsh-client-ui-primitives": "^0.1.0-rc.6",
     "@tabler/icons-react": "^3.46.0",
     "@tanstack/virtual-core": "^3.17.7",

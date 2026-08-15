@@ -23,6 +23,9 @@ plugin (no modifications inside the shipped dsh packages, survives upgrades).
   `.DS_Store`/`Thumbs.db` are hidden; `node_modules` stays visible
 - Search box (host `/filetree/search` with client-side BFS fallback), skips
   `.git`/node_modules, click a hit to preview it
+- **Git diff**: modified files get a *diff* toggle in the preview header —
+  HEAD vs working tree side-by-side (@codemirror/merge, unchanged regions
+  collapsed, gutter markers)
 - Click any file → **preview**: text via **CodeMirror 6** (line numbers,
   selection/copy, themes, virtualization, VS Code-style floating find widget
   on Ctrl+F), and **media natively** — images / video / audio / PDF streamed

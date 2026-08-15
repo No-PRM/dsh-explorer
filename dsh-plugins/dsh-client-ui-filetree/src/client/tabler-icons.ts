@@ -121,3 +121,6 @@ export const IconTerminal2: TablerIcon = IconTerminal2Raw
 // @ts-expect-error per-icon .mjs ships no adjacent types
 import IconVideoRaw from '@tabler/icons-react/dist/esm/icons/IconVideo.mjs'
 export const IconVideo: TablerIcon = IconVideoRaw
+// @ts-expect-error per-icon .mjs ships no adjacent types
+import IconArrowsDiffRaw from '@tabler/icons-react/dist/esm/icons/IconArrowsDiff.mjs'
+export const IconArrowsDiff: TablerIcon = IconArrowsDiffRaw

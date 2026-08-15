@@ -564,7 +564,7 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
           : null}
       </div>
       {previewPath
-        ? <PreviewPane previewPath={previewPath} preview={preview} relPath={relPath} onClose={closePreview} t={t} />
+        ? <PreviewPane previewPath={previewPath} preview={preview} relPath={relPath} onClose={closePreview} canDiff={previewPath != null && git != null && git.byPath.has(previewPath)} t={t} />
         : searching || !rootPath
           ? <div className={styles.body}>{bodyContent}</div>
           : (

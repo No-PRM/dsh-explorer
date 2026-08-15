@@ -1,6 +1,6 @@
 import { createReadStream } from "node:fs";
 import { readFile, readdir, stat } from "node:fs/promises";
-import { isAbsolute, join } from "node:path";
+import { dirname, isAbsolute, join, relative as pathRelative } from "node:path";
 import { execFile } from "node:child_process";
 
 /**
@@ -396,6 +396,48 @@ function apply(ctx) {
             json(res, 404, {
               ok: false,
               error: { code: error?.code ?? "raw-failed", message: error instanceof Error ? error.message : String(error) }
+            });
+          }
+          return;
+        }
+
+        if (url.pathname === "/filetree/gitdiff") {
+          const pathValue = url.searchParams.get("path") ?? "";
+          if (pathValue === "" || !isAbsolute(pathValue)) {
+            json(res, 400, { ok: false, error: { code: "invalid-path", message: "an absolute path is required" } });
+            return;
+          }
+          try {
+            const top = await runGit(["-C", dirname(pathValue), "rev-parse", "--show-toplevel"]);
+            if (!top.ok) {
+              json(res, 200, { ok: true, git: false });
+              return;
+            }
+            const root = top.stdout.trim();
+            const rel = pathRelative(root, pathValue).split("\\").join("/");
+            const MAX = 512 * 1024;
+            /* HEAD version (git show fails for new/untracked files -> empty). */
+            let base = "";
+            const show = await runGit(["-C", root, "show", "HEAD:" + rel]);
+            if (show.ok && show.stdout) base = show.stdout.length > MAX ? show.stdout.slice(0, MAX) : show.stdout;
+            /* Working-tree version. */
+            let current = "";
+            try {
+              const buf = await readFile(pathValue);
+              current = buf.length > MAX ? buf.subarray(0, MAX).toString("utf8") : buf.toString("utf8");
+            } catch { /* deleted file -> empty current */ }
+            const binary = base.includes("\0") || current.includes("\0");
+            json(res, 200, {
+              ok: true, git: true, path: pathValue,
+              base: binary ? "" : base,
+              current: binary ? "" : current,
+              binary,
+              same: base === current
+            });
+          } catch (error) {
+            json(res, 200, {
+              ok: false, path: pathValue,
+              error: { code: error?.code ?? "gitdiff-failed", message: error instanceof Error ? error.message : String(error) }
             });
           }
           return;

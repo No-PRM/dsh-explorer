@@ -22,6 +22,8 @@ export const zh = {
   'gitDeleted': '已删除',
   'gitRenamed': '已重命名',
   'gitDirty': '包含变更',
+  'diff': 'git 对照',
+  'diffBack': '返回文件',
 
 } as const
 
@@ -49,5 +51,7 @@ export const en: Record<keyof typeof zh, string> = {
   'gitDeleted': 'Deleted',
   'gitRenamed': 'Renamed',
   'gitDirty': 'Contains changes',
+  'diff': 'Diff',
+  'diffBack': 'Back to file',
 
 }
