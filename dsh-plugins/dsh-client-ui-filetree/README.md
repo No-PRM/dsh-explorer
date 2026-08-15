@@ -36,6 +36,9 @@ plugin (no modifications inside the shipped dsh packages, survives upgrades).
   workspace-relative path is inserted at the caret and a removable reference
   chip (file/folder icon + path + ×) appears above the composer, synced with
   the draft (auto-dismisses when the text is deleted or the message is sent)
+- **Drag selected code from the preview**: dropping a text selection inserts a
+  structured `relative/path:from-to` reference with the line range (same chip
+  flow as file drags)
 
 ## Engineering setup (official toolchain)
 

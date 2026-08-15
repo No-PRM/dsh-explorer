@@ -33,6 +33,7 @@ import { IconCloseOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { Translate } from '../types/index.ts'
 import { styles } from './styles.ts'
 import { basenameOf } from './constants.ts'
+import { DRAG_MIME } from './tree.tsx'
 import { fileIconSpec, TypeIcon } from './icons.tsx'
 import { IconArrowsDiff } from './tabler-icons.ts'
 
@@ -143,6 +144,7 @@ function GitDiff({ path, dark, t }: { path: string; dark: boolean; t: Translate 
 export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, t }: PreviewPaneProps) {
   /* Default to the diff view when the file has git changes. */
   const [diffMode, setDiffMode] = useState(canDiff)
+  const cmRef = useRef<{ view: EditorView } | null>(null)
   /* Follow the app's light/dark palette (body attribute flips on theme change). */
   const [dark, setDark] = useState(() => typeof document !== 'undefined' && document.body.hasAttribute('data-ds-dark-theme'))
   useEffect(() => {
@@ -157,6 +159,29 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, t
      Ctrl+F panel on the next poll tick. Memoize so reconfigure only fires when
      the opened file changes. */
   useEffect(() => { setDiffMode(canDiff) }, [previewPath, canDiff])
+
+  /* Content drag from the preview editor: turn the selected range into a
+     structured `relative/path:from-to` reference (same chip flow as file drags). */
+  useEffect(() => {
+    const onDragStart = (e: DragEvent) => {
+      const view = cmRef.current?.view
+      const target = e.target as Element | null
+      if (!view || !previewPath || !target || !target.closest('.cm-content')) return
+      const sel = view.state.selection.main
+      if (sel.empty) return
+      const fromLine = view.state.doc.lineAt(sel.from).number
+      const toLine = view.state.doc.lineAt(sel.to).number
+      const dt = e.dataTransfer
+      if (!dt) return
+      const rel = relPath(previewPath)
+      const display = rel + ':' + fromLine + (toLine > fromLine ? '-' + toLine : '')
+      dt.effectAllowed = 'copy'
+      dt.setData('text/plain', display)
+      dt.setData(DRAG_MIME, JSON.stringify({ path: previewPath, rel: display, kind: 'file', lineFrom: fromLine, lineTo: toLine }))
+    }
+    document.addEventListener('dragstart', onDragStart, true)
+    return () => document.removeEventListener('dragstart', onDragStart, true)
+  }, [previewPath])
 
   const lang = useMemo(() => langFor(previewPath), [previewPath])
   /* Install the search extension statically with the panel at the top, matching
@@ -191,6 +216,7 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, t
     body = (
       <div className={styles.previewCm}>
         <CodeMirror
+          ref={cmRef}
           key={previewPath ?? 'preview'}
           value={content}
           readOnly
