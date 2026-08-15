@@ -52,6 +52,8 @@ export interface PreviewPaneProps {
   onClose: () => void
   /** File has a git status (so a HEAD diff exists to compare). */
   canDiff: boolean
+  /** Manual selection-drag -> add a reference to the composer. */
+  onReference?: (rel: string, kind: string) => void
   t: Translate
 }
 
@@ -141,7 +143,7 @@ function GitDiff({ path, dark, t }: { path: string; dark: boolean; t: Translate 
   return <div ref={mountRef} className={styles.diffWrap} />
 }
 
-export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, t }: PreviewPaneProps) {
+export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, onReference, t }: PreviewPaneProps) {
   /* Default to the diff view when the file has git changes. */
   const [diffMode, setDiffMode] = useState(canDiff)
   const cmRef = useRef<{ view: EditorView } | null>(null)
@@ -160,28 +162,56 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, t
      the opened file changes. */
   useEffect(() => { setDiffMode(canDiff) }, [previewPath, canDiff])
 
-  /* Content drag from the preview editor: turn the selected range into a
-     structured `relative/path:from-to` reference (same chip flow as file drags). */
+  /* Manual selection-drag from the preview editor. CodeMirror's mousedown
+     preventDefaults, which kills the browser's native text drag - a drag over
+     the selection would re-box-select instead. So we take over: mousedown
+     inside a non-empty selection arms a pointer tracker; moving past a small
+     threshold commits to a drag that inserts a structured
+     relative/path:from-to reference; a click (no movement) still moves the
+     caret to the click position. */
+  const manualDrag = useRef<{ x: number; y: number; from: number; to: number; dragging: boolean } | null>(null)
   useEffect(() => {
-    const onDragStart = (e: DragEvent) => {
+    const onMouseDown = (e: MouseEvent) => {
       const view = cmRef.current?.view
       const target = e.target as Element | null
-      if (!view || !previewPath || !target || !target.closest('.cm-content')) return
+      if (!view || !previewPath || e.button !== 0 || !target || !target.closest('.cm-content')) return
       const sel = view.state.selection.main
       if (sel.empty) return
-      const fromLine = view.state.doc.lineAt(sel.from).number
-      const toLine = view.state.doc.lineAt(sel.to).number
-      const dt = e.dataTransfer
-      if (!dt) return
+      const pos = view.posAtCoords({ x: e.clientX, y: e.clientY })
+      if (pos === null || pos < sel.from || pos > sel.to) return
+      e.preventDefault() /* keep CM from re-selecting on the drag */
+      manualDrag.current = { x: e.clientX, y: e.clientY, from: sel.from, to: sel.to, dragging: false }
+    }
+    const onMouseMove = (e: MouseEvent) => {
+      const m = manualDrag.current
+      if (m && !m.dragging && Math.hypot(e.clientX - m.x, e.clientY - m.y) > 4) m.dragging = true
+    }
+    const onMouseUp = (e: MouseEvent) => {
+      const m = manualDrag.current
+      manualDrag.current = null
+      const view = cmRef.current?.view
+      if (!m || !view || !previewPath) return
+      if (!m.dragging) {
+        /* plain click inside the selection: restore caret placement */
+        const pos = view.posAtCoords({ x: e.clientX, y: e.clientY })
+        if (pos !== null) view.dispatch({ selection: { anchor: pos } })
+        return
+      }
+      const fromLine = view.state.doc.lineAt(m.from).number
+      const toLine = view.state.doc.lineAt(m.to).number
       const rel = relPath(previewPath)
       const display = rel + ':' + fromLine + (toLine > fromLine ? '-' + toLine : '')
-      dt.effectAllowed = 'copy'
-      dt.setData('text/plain', display)
-      dt.setData(DRAG_MIME, JSON.stringify({ path: previewPath, rel: display, kind: 'file', lineFrom: fromLine, lineTo: toLine }))
+      onReference?.(display, 'file')
     }
-    document.addEventListener('dragstart', onDragStart, true)
-    return () => document.removeEventListener('dragstart', onDragStart, true)
-  }, [previewPath])
+    document.addEventListener('mousedown', onMouseDown, true)
+    document.addEventListener('mousemove', onMouseMove, true)
+    document.addEventListener('mouseup', onMouseUp, true)
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown, true)
+      document.removeEventListener('mousemove', onMouseMove, true)
+      document.removeEventListener('mouseup', onMouseUp, true)
+    }
+  }, [previewPath, onReference])
 
   const lang = useMemo(() => langFor(previewPath), [previewPath])
   /* Install the search extension statically with the panel at the top, matching
