@@ -1,0 +1,5 @@
+# dsh-client-ui-explorer — bundle layer: mounts the (no-op) Node entry;
+# the browser bundle is served via the dsh.client declaration.
+- insert:
+    - id: ui-explorer
+      name: dsh-client-ui-explorer

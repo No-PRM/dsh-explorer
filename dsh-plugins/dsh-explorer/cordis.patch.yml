@@ -1,0 +1,4 @@
+# dsh-explorer — bundle layer: mounts the host plugin row.
+- insert:
+    - id: explorer
+      name: dsh-explorer

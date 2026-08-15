@@ -27,7 +27,15 @@
 
 ## 安装
 
-两个都要。把两个包拷进 profile 的 `node_modules`,再在它的 `cordis.patch.yml` 加:
+两个都要。一行命令 bundle 安装:
+
+```bash
+dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-explorer"
+dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-client-ui-explorer"
+# 重启 dsh
+```
+
+手动方式(开发/免重启):把两个包拷进 profile 的 `node_modules`,再在它的 `cordis.patch.yml` 加:
 
 ```yaml
 - insert:

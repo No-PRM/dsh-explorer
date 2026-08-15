@@ -33,7 +33,19 @@
 
 ## 安装(全新 profile)
 
-1. 把两个包拷进 `~/.dsh/profiles/<profile>/node_modules/` —— 浏览器包必须含**构建好的** `lib/client.js`。
+**一行命令 bundle 安装(推荐):**
+
+```bash
+# 宿主
+ dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-explorer"
+# 浏览器端
+ dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-client-ui-explorer"
+# 然后重启 dsh
+```
+
+两个包都是官方 **bundle 形态**(`dsh.bundle.patch` + 构建产物 `lib/` 已入库,git 源安装无需构建)。
+
+**手动方式(开发/免重启):**把两个包拷进 `~/.dsh/profiles/<profile>/node_modules/` —— 浏览器包必须含**构建好的** `lib/client.js`。
 2. 在 profile 的 `cordis.patch.yml` 中加两个条目:
 
    ```yaml

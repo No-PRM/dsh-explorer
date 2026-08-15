@@ -27,7 +27,15 @@ Both follow the official dsh plugin contract. Wiring and deployment details live
 
 ## Install
 
-You need both halves. Copy the two packages into the profile's `node_modules`, then add them to its `cordis.patch.yml`:
+You need both halves. One-line bundle install:
+
+```bash
+dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-explorer"
+dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-client-ui-explorer"
+# restart dsh
+```
+
+Manual (dev, no restart): copy the two packages into the profile's `node_modules` and add them to its `cordis.patch.yml`:
 
 ```yaml
 - insert:

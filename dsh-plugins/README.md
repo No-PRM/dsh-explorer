@@ -56,7 +56,19 @@ Both packages follow the official plugin contract:
 
 ## Install (fresh profile)
 
-1. Copy both packages into `~/.dsh/profiles/<profile>/node_modules/` — the
+**One-line bundle install (recommended):**
+
+```bash
+# host
+ dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-explorer"
+# browser
+ dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-client-ui-explorer"
+# then restart dsh
+```
+
+Both packages ship as official **bundles** (`dsh.bundle.patch` + built `lib/` in the repo, so a git-source install works with no build step).
+
+**Manual (dev / no-restart):** copy both packages into `~/.dsh/profiles/<profile>/node_modules/` — the
    browser package must contain a **built** `lib/client.js`.
 2. Add both to that profile's `cordis.patch.yml`:
 

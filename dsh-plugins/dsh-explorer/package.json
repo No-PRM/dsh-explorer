@@ -5,11 +5,19 @@
   "type": "module",
   "main": "lib/index.js",
   "files": [
-    "lib"
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh-CN.md"
   ],
   "license": "MIT",
   "exports": {
     ".": "./lib/index.js",
     "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
   }
 }
