@@ -18,7 +18,7 @@ upgrade can never break it:
 
 1. `dsh-filetree-v2` (host): a standard cordis plugin mounted through the profile's
    `cordis.patch.yml`; serves `/filetree/list`, `/filetree/search`, `/filetree/read`,
-   `/filetree/root`.
+   `/filetree/root`, `/filetree/gitstatus`.
 2. `dsh-client-ui-filetree` (browser): a standard client plugin discovered via the
    `dsh.client` declaration. It registers **one entry into the existing
    `shell.overlay` list slot** (`id: "filetree.drawer"`) which renders:

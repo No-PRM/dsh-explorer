@@ -56,3 +56,18 @@ export interface ClientCtx {
     register(ns: string, dict: Record<string, Record<string, string>>): unknown
   }
 }
+
+/** Git decoration data (VS Code-style file status markers). */
+export interface GitStatusEntry {
+  path: string
+  status: string
+  x: string
+  y: string
+}
+export interface GitStatus {
+  git: boolean
+  root?: string
+  entries?: GitStatusEntry[]
+  truncated?: boolean
+  reason?: string
+}

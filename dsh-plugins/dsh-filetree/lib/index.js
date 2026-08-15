@@ -1,5 +1,6 @@
 import { readFile, readdir, stat } from "node:fs/promises";
 import { isAbsolute, join } from "node:path";
+import { execFile } from "node:child_process";
 
 /**
  * dsh-filetree — host plugin.
@@ -19,6 +20,77 @@ import { isAbsolute, join } from "node:path";
 const name = "dsh-filetree";
 const inject = ["webServer"];
 const MAX_ENTRIES = 1000;
+/**
+ * Git status for the workspace (VS Code-style file decorations).
+ *
+ *   GET /filetree/gitstatus?path=<absolute>  ->  { ok, git, root, entries, truncated? }
+ *
+ * entries[i] = { path: <absolute>, status, x, y } where status is the
+ * single display letter (A/M/D/R/C/U/T), x/y the porcelain index/worktree
+ * codes. A 2s TTL cache per repo root keeps the client's 1.2s poll from
+ * hammering git. Non-repo / git-missing paths resolve to { git: false }.
+ */
+const GIT_CACHE_TTL = 2000;
+const MAX_GIT_ENTRIES = 2000;
+const gitCache = new Map(); // repo root -> { at, payload }
+
+function runGit(args) {
+  return new Promise((resolve) => {
+    execFile("git", args, { timeout: 4000, maxBuffer: 16 * 1024 * 1024, windowsHide: true }, (err, stdout) => {
+      if (err) {
+        resolve({ ok: false, code: err.code, stdout: String(stdout ?? "") });
+        return;
+      }
+      resolve({ ok: true, stdout: String(stdout) });
+    });
+  });
+}
+
+async function gitStatus(pathValue) {
+  const top = await runGit(["-C", pathValue, "rev-parse", "--show-toplevel"]);
+  if (!top.ok) {
+    return { git: false, reason: top.code === "ENOENT" ? "git-not-found" : "not-a-repo" };
+  }
+  const root = top.stdout.trim();
+  if (!root) return { git: false, reason: "no-root" };
+  const cached = gitCache.get(root);
+  if (cached && Date.now() - cached.at < GIT_CACHE_TTL) return cached.payload;
+  const out = await runGit(["-C", root, "--no-optional-locks", "status", "--porcelain=v1", "-z", "--untracked-files=all"]);
+  const payload = { git: true, root };
+  if (out.ok && out.stdout) {
+    const entries = [];
+    const tokens = out.stdout.split("\0");
+    for (let i = 0; i < tokens.length; i++) {
+      const tok = tokens[i];
+      if (!tok) continue;
+      const x = tok[0] ?? " ";
+      const y = tok[1] ?? " ";
+      let rel = tok.slice(3);
+      if (x === "R" || x === "C") {
+        const next = tokens[i + 1];
+        if (next) {
+          rel = next;
+          i += 1;
+        }
+      }
+      if (!rel) continue;
+      const status = x !== " " && x !== "?" ? x : y !== " " && y !== "?" ? y : "U";
+      entries.push({ path: join(root, rel), status, x, y });
+      if (entries.length >= MAX_GIT_ENTRIES) {
+        payload.truncated = true;
+        break;
+      }
+    }
+    payload.entries = entries;
+  } else if (out.ok) {
+    payload.entries = [];
+  } else {
+    payload.error = { code: out.code ?? "git-status-failed" };
+  }
+  gitCache.set(root, { at: Date.now(), payload });
+  return payload;
+}
+
 
 /** Sort rows: directories before files, then case-insensitive by name. */
 function compareRows(a, b) {
@@ -222,6 +294,25 @@ function apply(ctx) {
                 code: error?.code ?? "search-failed",
                 message: error instanceof Error ? error.message : String(error)
               }
+            });
+          }
+          return;
+        }
+
+        if (url.pathname === "/filetree/gitstatus") {
+          const pathValue = url.searchParams.get("path") ?? "";
+          if (pathValue === "" || !isAbsolute(pathValue)) {
+            json(res, 400, { ok: false, error: { code: "invalid-path", message: "an absolute path is required" } });
+            return;
+          }
+          try {
+            const result = await gitStatus(pathValue);
+            json(res, 200, { ok: true, path: pathValue, ...result });
+          } catch (error) {
+            json(res, 200, {
+              ok: false,
+              path: pathValue,
+              error: { code: error?.code ?? "git-status-failed", message: error instanceof Error ? error.message : String(error) }
             });
           }
           return;

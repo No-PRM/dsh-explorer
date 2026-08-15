@@ -50,3 +50,10 @@ export function loadExpandedSet(): Set<string> {
 export function persistExpanded(set: Set<string>): void {
   try { localStorage.setItem(EXPANDED_KEY, JSON.stringify(Array.from(set))) } catch (e) {}
 }
+
+/** Parent directory of an absolute path (keeps the trailing-drive form). */
+export function dirnameOf(p: string): string {
+  const idx = Math.max(p.lastIndexOf('\\'), p.lastIndexOf('/'))
+  if (idx <= 0) return p
+  return p.slice(0, idx)
+}

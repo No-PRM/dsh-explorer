@@ -17,17 +17,21 @@ export const ROW_H = 23
 
 export type FlatRow =
   | { key: string; path: string; name: string; depth: number; kind: 'dir'; type: 'dir'; isOpen: boolean }
-  | { key: string; path: string; name: string; depth: number; kind: 'file'; type: 'file'; size: number; hidden: boolean }
+  | { key: string; path: string; name: string; depth: number; kind: 'file'; type: 'file'; size: number; hidden: boolean; deleted: boolean }
   | { key: string; path: string; depth: number; type: 'loading' }
   | { key: string; path: string; depth: number; type: 'empty' }
   | { key: string; path: string; depth: number; type: 'truncated' }
   | { key: string; path: string; depth: number; type: 'error'; message: string }
+
+/** Git statuses of files deleted from the working tree (parent dir -> rows). */
+export type DeletedByDir = Map<string, Array<{ name: string; path: string }>>
 
 /** Depth-first flattening of the visible tree (expanded dirs only). */
 export function flattenTree(
   rootPath: string | null,
   dirs: Record<string, DirRecord>,
   expanded: Set<string>,
+  deletedByDir?: DeletedByDir,
 ): FlatRow[] {
   if (!rootPath) return []
   const rows: FlatRow[] = []
@@ -43,15 +47,44 @@ export function flattenTree(
       rows.push({ key: path + '::error', path, depth: depth + 1, type: 'error', message: rec.message })
       return
     }
+    /* Files of this dir, merged with deleted-file ghost rows, sorted by name
+       (dirs keep the host's order and are visited inline). */
+    const files: Array<{ name: string; path: string; size: number; hidden: boolean; deleted: boolean }> = []
     for (const e of rec.entries) {
-      if (e.kind === 'dir') visit(joinPath(path, e.name), e.name, depth + 1)
-      else rows.push({ key: joinPath(path, e.name), path: joinPath(path, e.name), name: e.name, depth: depth + 1, kind: 'file', type: 'file', size: e.size, hidden: e.hidden })
+      if (e.kind === 'dir') {
+        visit(joinPath(path, e.name), e.name, depth + 1)
+      } else {
+        files.push({ name: e.name, path: joinPath(path, e.name), size: e.size, hidden: e.hidden, deleted: false })
+      }
     }
-    if (rec.entries.length === 0) rows.push({ key: path + '::empty', path, depth: depth + 1, type: 'empty' })
+    const dels = deletedByDir?.get(path)
+    if (dels) {
+      for (const d of dels) files.push({ name: d.name, path: d.path, size: 0, hidden: false, deleted: true })
+    }
+    files.sort((a, b) => {
+      const al = a.name.toLowerCase()
+      const bl = b.name.toLowerCase()
+      return al < bl ? -1 : al > bl ? 1 : 0
+    })
+    for (const f of files) {
+      rows.push({ key: f.path, path: f.path, name: f.name, depth: depth + 1, kind: 'file', type: 'file', size: f.size, hidden: f.hidden, deleted: f.deleted })
+    }
+    if (rec.entries.length === 0 && !dels?.length) rows.push({ key: path + '::empty', path, depth: depth + 1, type: 'empty' })
     if (rec.truncated) rows.push({ key: path + '::truncated', path, depth: depth + 1, type: 'truncated' })
   }
   visit(rootPath, basenameOf(rootPath), 0)
   return rows
+}
+
+/** VS Code git-decoration letter → localized tooltip key + CSS class. */
+const GIT_META: Record<string, { key: string; cls: string }> = {
+  M: { key: 'gitModified', cls: 'gitM' },
+  A: { key: 'gitAdded', cls: 'gitA' },
+  U: { key: 'gitUntracked', cls: 'gitU' },
+  D: { key: 'gitDeleted', cls: 'gitD' },
+  R: { key: 'gitRenamed', cls: 'gitR' },
+  C: { key: 'gitRenamed', cls: 'gitR' },
+  T: { key: 'gitModified', cls: 'gitT' },
 }
 
 interface TreeRowProps {
@@ -61,10 +94,12 @@ interface TreeRowProps {
   activeGuide: ActiveGuide | null
   onToggle: (p: string) => void
   openPreview: (p: string) => void
+  gitByPath: Map<string, string>
+  dirtyDirs: Set<string>
   t: Translate
 }
 
-function TreeRow({ row, hoverPath, onRowHover, activeGuide, onToggle, openPreview, t }: TreeRowProps) {
+function TreeRow({ row, hoverPath, onRowHover, activeGuide, onToggle, openPreview, gitByPath, dirtyDirs, t }: TreeRowProps) {
   const sep = row.path.indexOf('\\') !== -1 ? '\\' : '/'
   /* VS Code guide rule: a row's guide at index k lights when that ancestor is
      the active node and this row is a strict descendant of it. */
@@ -95,24 +130,28 @@ function TreeRow({ row, hoverPath, onRowHover, activeGuide, onToggle, openPrevie
         <IconChevronRightOutline14 className={cls(styles.chevron, row.isOpen && styles.chevronOpen)} size={12} />
         {row.isOpen ? <IconFolderOpen16 className={styles.dirIcon} size={15} /> : <IconFolderClose16 className={styles.dirIcon} size={15} />}
         <span className={styles.name}>{row.name}</span>
+        {dirtyDirs.has(row.path) ? <span className={styles.gitDot} title={t('gitDirty')} /> : null}
       </button>
     )
   }
 
   if (row.type === 'file') {
+    const status = gitByPath.get(row.path)
+    const meta = status ? GIT_META[status] : undefined
     return (
       <div
-        className={cls(styles.row, styles.fileRow, row.hidden && styles.hidden)}
+        className={cls(styles.row, styles.fileRow, row.hidden && styles.hidden, row.deleted && styles.rowDeleted)}
         style={{ paddingLeft }}
         title={row.path}
-        onClick={() => openPreview(row.path)}
+        onClick={row.deleted ? undefined : () => openPreview(row.path)}
         onMouseEnter={() => onRowHover(row.path)}
         onMouseLeave={() => onRowHover(null)}
       >
         {renderGuides(row.depth)}
         <TypeIcon spec={fileIconSpec(row.name)} size={16} />
-        <span className={styles.name}>{row.name}</span>
-        <span className={styles.size}>{formatSize(row.size)}</span>
+        <span className={cls(styles.name, row.deleted && styles.nameDeleted)}>{row.name}</span>
+        {!row.deleted ? <span className={styles.size}>{formatSize(row.size)}</span> : null}
+        {meta ? <span className={cls(styles.gitMark, styles[meta.cls as keyof typeof styles])} title={t(meta.key)}>{status}</span> : null}
       </div>
     )
   }
@@ -137,11 +176,13 @@ export interface TreeListProps {
   activeGuide: ActiveGuide | null
   onToggle: (p: string) => void
   openPreview: (p: string) => void
+  gitByPath: Map<string, string>
+  dirtyDirs: Set<string>
   t: Translate
 }
 
 /** Virtualized scrollable tree list. */
-export function TreeList({ rows, hoverPath, onRowHover, activeGuide, onToggle, openPreview, t }: TreeListProps) {
+export function TreeList({ rows, hoverPath, onRowHover, activeGuide, onToggle, openPreview, gitByPath, dirtyDirs, t }: TreeListProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const virtualizer = useVirtualizer({
     count: rows.length,
@@ -159,7 +200,7 @@ export function TreeList({ rows, hoverPath, onRowHover, activeGuide, onToggle, o
               key={row.key}
               style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: vi.size, transform: 'translateY(' + (4 + vi.start) + 'px)' }}
             >
-              <TreeRow row={row} hoverPath={hoverPath} onRowHover={onRowHover} activeGuide={activeGuide} onToggle={onToggle} openPreview={openPreview} t={t} />
+              <TreeRow row={row} hoverPath={hoverPath} onRowHover={onRowHover} activeGuide={activeGuide} onToggle={onToggle} openPreview={openPreview} gitByPath={gitByPath} dirtyDirs={dirtyDirs} t={t} />
             </div>
           )
         })}

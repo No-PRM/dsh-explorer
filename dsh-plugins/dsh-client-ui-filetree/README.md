@@ -15,6 +15,10 @@ plugin (no modifications inside the shipped dsh packages, survives upgrades).
   mounted, so huge folders stay smooth — same guide/hover/preview behavior
 - Search box (host `/filetree/search` with client-side BFS fallback), skips
   `.git`/node_modules, click a hit to preview it
+- **Git decorations** (VS Code-style): when the workspace is inside a git
+  repo, files show M/A/U/D/R status letters with theme colors, folders show a
+  dirty dot when their subtree has changes, and deleted files remain visible as
+  struck-through ghost rows (host `/filetree/gitstatus`, ~3 s poll)
 - Click any file → **CodeMirror 6 read-only preview** (real line numbers,
   selection/copy, dark/light themes, virtualization — no line cap), 512 KB /
   binary detection, 1.2 s live refresh while the drawer is open

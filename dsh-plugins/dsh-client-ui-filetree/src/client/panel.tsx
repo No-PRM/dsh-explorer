@@ -8,12 +8,12 @@ import {
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { DirRecord, SearchResult, SelectorHook, SessionsState, Translate, WorkspacesState } from './types.ts'
 import {
-  cls, loadExpandedSet, persistExpanded, POLL_MS,
+  cls, dirnameOf, loadExpandedSet, persistExpanded, POLL_MS,
 } from './constants.ts'
 import { styles } from './styles.ts'
-import { flattenTree, TreeList } from './tree.tsx'
+import { flattenTree, TreeList, type DeletedByDir } from './tree.tsx'
 import { PreviewPane, type PreviewState } from './preview.tsx'
-import { fetchDir, bfsSearch } from './fetch.ts'
+import { fetchDir, bfsSearch, fetchGitStatus } from './fetch.ts'
 import { fileIconSpec, IconCollapseAll, IconExpandAll, TypeIcon } from './icons.tsx'
 
 export interface FileTreePanelProps {
@@ -32,6 +32,9 @@ interface SearchUiState {
 }
 
 const EMPTY_SEARCH: SearchUiState = { q: '', status: 'idle', results: [], error: null }
+/** Stable empty containers so TreeList props keep identity between renders. */
+const EMPTY_GIT_MAP: Map<string, string> = new Map()
+const EMPTY_GIT_SET: Set<string> = new Set()
 
 export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTreePanelProps) {
   const [expanded, setExpanded] = useState<Set<string>>(loadExpandedSet)
@@ -42,11 +45,15 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
   const [hoverPath, setHoverPath] = useState<string | null>(null)
   const [previewPath, setPreviewPath] = useState<string | null>(null)
   const [preview, setPreview] = useState<PreviewState | null>(null)
+  const [git, setGit] = useState<{ byPath: Map<string, string>; dirtyDirs: Set<string>; deletedByDir: DeletedByDir } | null>(null)
 
   const previewPathRef = useRef<string | null>(null)
   const dirsRef = useRef<Record<string, DirRecord>>({})
   const expandedRef = useRef<Set<string>>(expanded)
   const searchTimer = useRef<number | null>(null)
+  const gitTimer = useRef(0)
+  const gitSkipRoot = useRef<string | null>(null)
+  const rootPathRef = useRef<string | null>(null)
   const searchSeq = useRef(0)
 
   useEffect(() => { previewPathRef.current = previewPath }, [previewPath])
@@ -66,6 +73,13 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
     return null
   }, [current, byId, wsItems, recentId])
 
+  /* Reset git decorations when the workspace folder changes. */
+  useEffect(() => {
+    rootPathRef.current = rootPath
+    gitSkipRoot.current = null
+    gitTimer.current = 0
+    setGit(null)
+  }, [rootPath])
   const fetchAndStore = useCallback(async (p: string) => {
     const r = await fetchDir(p)
     setDirs((prev) => ({ ...prev, [p]: r }))
@@ -81,6 +95,45 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
       if (manual) setBusy(false)
     }
   }, [fetchAndStore])
+
+  /* VS Code-style git decorations: fetch /filetree/gitstatus throttled to
+     ~3s; non-repo roots are remembered so we stop probing them. */
+  const refreshGit = useCallback(async (p: string) => {
+    const now = Date.now()
+    if (now - gitTimer.current < 3000) return
+    gitTimer.current = now
+    const data = await fetchGitStatus(p)
+    if (rootPathRef.current !== p) return
+    if (!data.git || !data.root || !data.entries) {
+      gitSkipRoot.current = p
+      setGit(null)
+      return
+    }
+    const sep = p.indexOf('\\') !== -1 ? '\\' : '/'
+    const norm = (x: string) => (sep === '\\' ? x.replace(/\//g, '\\') : x.replace(/\\/g, '/'))
+    const root = norm(data.root)
+    const rootWithSep = root.endsWith(sep) ? root : root + sep
+    const byPath = new Map<string, string>()
+    const dirtyDirs = new Set<string>()
+    const deletedByDir: DeletedByDir = new Map()
+    for (const e of data.entries) {
+      const path = norm(e.path)
+      byPath.set(path, e.status)
+      if (e.status === 'D') {
+        const parent = dirnameOf(path)
+        const list = deletedByDir.get(parent) ?? []
+        list.push({ name: path.slice(Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/')) + 1), path })
+        deletedByDir.set(parent, list)
+      }
+      let d = dirnameOf(path)
+      while (d === root || d.startsWith(rootWithSep)) {
+        dirtyDirs.add(d)
+        if (d === root) break
+        d = dirnameOf(d)
+      }
+    }
+    setGit({ byPath, dirtyDirs, deletedByDir })
+  }, [])
 
   /* Load the root level once the current folder resolves. */
   useEffect(() => {
@@ -124,7 +177,9 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
     const timer = window.setInterval(() => {
       void refreshAll()
       if (previewPathRef.current) void refreshPreview(previewPathRef.current)
+      if (rootPathRef.current && gitSkipRoot.current !== rootPathRef.current) void refreshGit(rootPathRef.current)
     }, POLL_MS)
+    if (rootPathRef.current && gitSkipRoot.current !== rootPathRef.current) void refreshGit(rootPathRef.current)
     const onVisible = () => { if (!document.hidden) void refreshAll() }
     document.addEventListener('visibilitychange', onVisible)
     window.addEventListener('focus', onVisible)
@@ -299,7 +354,7 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
 
   let bodyContent: React.ReactNode
   const searching = query.trim() !== ''
-  const rows = useMemo(() => flattenTree(rootPath, dirs, expanded), [rootPath, dirs, expanded])
+  const rows = useMemo(() => flattenTree(rootPath, dirs, expanded, git?.deletedByDir), [rootPath, dirs, expanded, git])
   if (searching) {
     bodyContent = search.status === 'searching'
       ? <div className={styles.message}>{t('searching')}</div>
@@ -371,6 +426,8 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
               activeGuide={activeGuide}
               onToggle={toggleDir}
               openPreview={openPreview}
+              gitByPath={git?.byPath ?? EMPTY_GIT_MAP}
+              dirtyDirs={git?.dirtyDirs ?? EMPTY_GIT_SET}
               t={t}
             />
           )}

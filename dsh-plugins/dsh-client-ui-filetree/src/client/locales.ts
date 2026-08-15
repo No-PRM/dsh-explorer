@@ -17,6 +17,13 @@ export const zh = {
   'closePreview': '关闭预览',
   'binaryFile': '二进制文件，暂不支持预览',
   'previewTruncated': '（文件过大，仅显示前 512KB）',
+  'gitModified': '已修改',
+  'gitAdded': '已新增',
+  'gitUntracked': '未跟踪',
+  'gitDeleted': '已删除',
+  'gitRenamed': '已重命名',
+  'gitDirty': '包含变更',
+
 } as const
 
 /** English dictionary, checked complete against the zh key set. */
@@ -38,4 +45,11 @@ export const en: Record<keyof typeof zh, string> = {
   'closePreview': 'Close preview',
   'binaryFile': 'Binary file — preview not supported',
   'previewTruncated': '(file too large — showing first 512 KB)',
+  'gitModified': 'Modified',
+  'gitAdded': 'Added',
+  'gitUntracked': 'Untracked',
+  'gitDeleted': 'Deleted',
+  'gitRenamed': 'Renamed',
+  'gitDirty': 'Contains changes',
+
 }

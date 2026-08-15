@@ -1,4 +1,4 @@
-import type { DirRecord, SearchResult } from './types.ts'
+import type { DirRecord, GitStatus, SearchResult } from './types.ts'
 import { joinPath } from './constants.ts'
 
 /** List one directory level through the host's /filetree/list. */
@@ -45,4 +45,19 @@ export async function bfsSearch(root: string, q: string): Promise<SearchResult[]
     depth += 1
   }
   return results
+}
+
+/** Git status for the workspace (host /filetree/gitstatus; git:false when not a repo). */
+export async function fetchGitStatus(root: string): Promise<GitStatus> {
+  try {
+    const res = await fetch('/filetree/gitstatus?path=' + encodeURIComponent(root), { cache: 'no-store' })
+    if (!res.ok) return { git: false }
+    const data = await res.json()
+    if (data && data.ok === true && data.git === true) {
+      return { git: true, root: data.root, entries: data.entries || [], truncated: data.truncated === true }
+    }
+    return { git: false }
+  } catch (e) {
+    return { git: false }
+  }
 }
