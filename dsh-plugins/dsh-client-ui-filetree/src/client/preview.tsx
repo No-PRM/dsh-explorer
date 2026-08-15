@@ -169,7 +169,8 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, o
      threshold commits to a drag that inserts a structured
      relative/path:from-to reference; a click (no movement) still moves the
      caret to the click position. */
-  const manualDrag = useRef<{ x: number; y: number; from: number; to: number; dragging: boolean } | null>(null)
+  const manualDrag = useRef<{ x: number; y: number; from: number; to: number; dragging: boolean; display: string } | null>(null)
+  const dragGhost = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
     const onMouseDown = (e: MouseEvent) => {
       const view = cmRef.current?.view
@@ -182,15 +183,38 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, o
          edges) — grabbing an edge stays CodeMirror's normal selection adjust */
       if (pos === null || pos <= sel.from || pos >= sel.to) return
       e.preventDefault() /* keep CM from re-selecting on the drag */
-      manualDrag.current = { x: e.clientX, y: e.clientY, from: sel.from, to: sel.to, dragging: false }
+      const fromLine = view.state.doc.lineAt(sel.from).number
+      const toLine = view.state.doc.lineAt(sel.to).number
+      const display = relPath(previewPath) + ':' + fromLine + (toLine > fromLine ? '-' + toLine : '')
+      manualDrag.current = { x: e.clientX, y: e.clientY, from: sel.from, to: sel.to, dragging: false, display }
     }
     const onMouseMove = (e: MouseEvent) => {
       const m = manualDrag.current
-      if (m && !m.dragging && Math.hypot(e.clientX - m.x, e.clientY - m.y) > 8) m.dragging = true
+      if (!m) return
+      if (!m.dragging) {
+        if (Math.hypot(e.clientX - m.x, e.clientY - m.y) > 8) {
+          m.dragging = true
+          /* drag feedback: a ghost pill following the pointer, like a native
+             drag image, showing what will be inserted */
+          if (!dragGhost.current) {
+            const g = document.createElement('div')
+            g.className = 'ftr-dragGhost'
+            g.textContent = m.display
+            document.body.appendChild(g)
+            dragGhost.current = g
+          }
+        }
+      }
+      if (m.dragging && dragGhost.current) {
+        dragGhost.current.style.left = e.clientX + 12 + 'px'
+        dragGhost.current.style.top = e.clientY + 12 + 'px'
+      }
     }
     const onMouseUp = (e: MouseEvent) => {
       const m = manualDrag.current
       manualDrag.current = null
+      dragGhost.current?.remove()
+      dragGhost.current = null
       const view = cmRef.current?.view
       if (!m || !view || !previewPath) return
       if (!m.dragging) {
@@ -199,11 +223,7 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, o
         if (pos !== null) view.dispatch({ selection: { anchor: pos } })
         return
       }
-      const fromLine = view.state.doc.lineAt(m.from).number
-      const toLine = view.state.doc.lineAt(m.to).number
-      const rel = relPath(previewPath)
-      const display = rel + ':' + fromLine + (toLine > fromLine ? '-' + toLine : '')
-      onReference?.(display, 'file')
+      onReference?.(m.display, 'file')
     }
     document.addEventListener('mousedown', onMouseDown, true)
     document.addEventListener('mousemove', onMouseMove, true)
