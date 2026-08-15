@@ -65,6 +65,19 @@
 - 宿主:`GET http://127.0.0.1:3080/filetree/list?path=D:/CodeWorkspaces/测试/create` 与 `GET http://127.0.0.1:3080/filetree/gitstatus?path=...`
 - 启动图:`GET /` → `window.__DSH_BOOT__` 包含 `dsh-client-ui-explorer`。
 
+## 版本号
+
+两个数字,两种用途:
+
+- **包 semver**(两个 `package.json` 的 `0.1.0`)—— 真正的插件版本,用于分发;功能/小版本更新时两个包同步递增。
+- **本地部署后缀**(`dsh-explorer-v1`)—— 每台机器的免重启部署计数(复制成新后缀让新模块 id 生效)。不是 semver。
+
+GitHub 分发建议把安装 pin 到 release tag 而不是分支:
+
+```bash
+ dsh plugin --profile web add "github:No-PRM/dsh-explorer#v0.1.0&path:/dsh-plugins/dsh-explorer"
+```
+
 ## 开发
 
 - 源码就在本目录;已安装副本位于 `~/.dsh/profiles/web/node_modules/` —— 浏览器安装是**junction**(指向源码,构建即热更新);宿主是拷贝。

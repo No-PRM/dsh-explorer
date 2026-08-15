@@ -93,6 +93,19 @@ Both packages ship as official **bundles** (`dsh.bundle.patch` + built `lib/` in
   and `GET http://127.0.0.1:3080/filetree/gitstatus?path=...`
 - Boot graph: `GET /` → `window.__DSH_BOOT__` contains `dsh-client-ui-explorer`.
 
+## Versioning
+
+Two numbers, two jobs:
+
+- **Package semver** (`0.1.0` in each `package.json`) — the real plugin version for distribution; bump both packages in lockstep for feature/minor releases.
+- **Local deploy suffix** (`dsh-explorer-v1`) — a per-machine counter for no-restart host deploys (copy to a bumped name so the fresh module id loads). Not a semver.
+
+For GitHub distribution, prefer pinning installs to a release tag over a branch:
+
+```bash
+ dsh plugin --profile web add "github:No-PRM/dsh-explorer#v0.1.0&path:/dsh-plugins/dsh-explorer"
+```
+
 ## Dev
 
 - Sources live in this directory; the installed copies are at
