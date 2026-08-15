@@ -155,11 +155,22 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
 
   useEffect(() => {
     if (refs.length === 0) { updateChipBar([], removeRef); return }
-    const render = () => updateChipBar(refs, removeRef)
+    const render = () => {
+      /* Sync with the draft: the app clears the composer through React state
+         (no DOM 'input' event), so each heartbeat also drops refs whose path
+         text vanished — this makes chips disappear after sending, without
+         needing a click. */
+      const ta = findComposerTextarea()
+      if (ta) {
+        const alive = refs.filter((r) => ta.value.includes(r.rel))
+        if (alive.length !== refs.length) { setRefs(alive); return }
+      }
+      updateChipBar(refs, removeRef)
+    }
     render()
     window.addEventListener('resize', render)
     window.addEventListener('scroll', render, true)
-    const t = window.setInterval(render, 500)
+    const t = window.setInterval(render, 400)
     return () => {
       window.removeEventListener('resize', render)
       window.removeEventListener('scroll', render, true)
