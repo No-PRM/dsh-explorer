@@ -32,9 +32,12 @@ import { styles } from './styles.ts'
 import { basenameOf } from './constants.ts'
 import { fileIconSpec, TypeIcon } from './icons.tsx'
 
+export type MediaKind = 'image' | 'video' | 'audio' | 'pdf'
+
 export type PreviewState =
   | { status: 'loading' }
   | { status: 'done'; binary: boolean; content?: string; size?: number; truncated?: boolean }
+  | { status: 'done'; kind: MediaKind; url: string }
   | { status: 'error'; error: string }
 
 export interface PreviewPaneProps {
@@ -79,6 +82,17 @@ function langFor(path: string | null): Extension | null {
   }
 }
 
+/** Media files render natively (img/video/audio/pdf) via the host /filetree/raw stream. */
+export function mediaKind(path: string | null): MediaKind | null {
+  if (!path) return null
+  const ext = path.slice(path.lastIndexOf('.') + 1).toLowerCase()
+  if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'avif', 'ico'].includes(ext)) return 'image'
+  if (['mp4', 'webm', 'ogv', 'mov', 'm4v'].includes(ext)) return 'video'
+  if (['mp3', 'wav', 'ogg', 'oga', 'm4a', 'flac', 'aac', 'opus'].includes(ext)) return 'audio'
+  if (ext === 'pdf') return 'pdf'
+  return null
+}
+
 export function PreviewPane({ previewPath, preview, relPath, onClose, t }: PreviewPaneProps) {
   /* Follow the app's light/dark palette (body attribute flips on theme change). */
   const [dark, setDark] = useState(() => typeof document !== 'undefined' && document.body.hasAttribute('data-ds-dark-theme'))
@@ -104,6 +118,18 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, t }: Previ
     body = <div className={styles.message}>{t('loading')}</div>
   } else if (preview.status === 'error') {
     body = <div className={styles.error}>{preview.error}</div>
+  } else if ('kind' in preview) {
+    /* media preview — rendered natively, no content fetch needed */
+    const url = preview.url
+    if (preview.kind === 'image') {
+      body = <div className={styles.media}><img src={url} alt={basenameOf(previewPath ?? '')} draggable={false} /></div>
+    } else if (preview.kind === 'video') {
+      body = <div className={styles.media}><video src={url} controls /></div>
+    } else if (preview.kind === 'audio') {
+      body = <div className={styles.media}><audio src={url} controls /></div>
+    } else {
+      body = <div className={styles.media}><iframe className={styles.mediaFrame} src={url} title={basenameOf(previewPath ?? '')} /></div>
+    }
   } else if (preview.binary) {
     body = <div className={styles.message}>{t('binaryFile')}</div>
   } else {

@@ -12,7 +12,7 @@ import {
 } from './constants.ts'
 import { styles } from './styles.ts'
 import { flattenTree, TreeList, type DeletedByDir } from './tree.tsx'
-import { PreviewPane, type PreviewState } from './preview.tsx'
+import { mediaKind, PreviewPane, type PreviewState } from './preview.tsx'
 import { fetchDir, bfsSearch, fetchGitStatus } from './fetch.ts'
 import { fileIconSpec, IconCollapseAll, IconExpandAll, TypeIcon } from './icons.tsx'
 
@@ -264,6 +264,7 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
   }, [])
 
   const refreshPreview = useCallback(async (p: string) => {
+    if (mediaKind(p)) return /* media elements manage their own state */
     try {
       const res = await fetch('/filetree/read?path=' + encodeURIComponent(p), { cache: 'no-store' })
       applyPreviewData(await res.json())
@@ -272,6 +273,12 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
 
   const openPreview = useCallback(async (p: string) => {
     setPreviewPath(p)
+    const kind = mediaKind(p)
+    if (kind) {
+      /* media previews stream from /filetree/raw — no content read needed */
+      setPreview({ status: 'done', kind, url: '/filetree/raw?path=' + encodeURIComponent(p) })
+      return
+    }
     setPreview({ status: 'loading' })
     try {
       const res = await fetch('/filetree/read?path=' + encodeURIComponent(p), { cache: 'no-store' })

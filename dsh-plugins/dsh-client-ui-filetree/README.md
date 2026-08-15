@@ -23,9 +23,11 @@ plugin (no modifications inside the shipped dsh packages, survives upgrades).
   `.DS_Store`/`Thumbs.db` are hidden; `node_modules` stays visible
 - Search box (host `/filetree/search` with client-side BFS fallback), skips
   `.git`/node_modules, click a hit to preview it
-- Click any file → **CodeMirror 6 read-only preview** (line numbers,
-  selection/copy, dark/light themes, virtualization, VS Code-style floating
-  find widget on Ctrl+F), 512 KB / binary detection, 1.2 s live refresh
+- Click any file → **preview**: text via **CodeMirror 6** (line numbers,
+  selection/copy, themes, virtualization, VS Code-style floating find widget
+  on Ctrl+F), and **media natively** — images / video / audio / PDF streamed
+  from the host `/filetree/raw` (Range-enabled, video seeking works)
+- 512 KB cap + binary detection for text, 1.2 s live refresh
 - Expand-all / collapse-all (bounded: 150 dirs × depth 6), manual refresh
 
 ## Engineering setup (official toolchain)

@@ -1,3 +1,4 @@
+import { createReadStream } from "node:fs";
 import { readFile, readdir, stat } from "node:fs/promises";
 import { isAbsolute, join } from "node:path";
 import { execFile } from "node:child_process";
@@ -32,6 +33,23 @@ const MAX_ENTRIES = 1000;
  */
 const GIT_CACHE_TTL = 2000;
 const MAX_GIT_ENTRIES = 2000;
+/** Extension -> content type for the raw media stream (best-effort). */
+const MIME_BY_EXT = {
+  ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif",
+  ".webp": "image/webp", ".svg": "image/svg+xml", ".bmp": "image/bmp", ".avif": "image/avif",
+  ".ico": "image/x-icon",
+  ".mp4": "video/mp4", ".webm": "video/webm", ".ogv": "video/ogg", ".mov": "video/quicktime", ".m4v": "video/mp4",
+  ".mp3": "audio/mpeg", ".wav": "audio/wav", ".ogg": "audio/ogg", ".oga": "audio/ogg", ".m4a": "audio/mp4",
+  ".flac": "audio/flac", ".aac": "audio/aac", ".opus": "audio/opus",
+  ".pdf": "application/pdf"
+};
+
+function contentTypeFor(pathValue) {
+  const dot = pathValue.lastIndexOf(".");
+  const ext = dot >= 0 ? pathValue.slice(dot).toLowerCase() : "";
+  return MIME_BY_EXT[ext] ?? "application/octet-stream";
+}
+
 const gitCache = new Map(); // repo root -> { at, payload }
 
 function runGit(args) {
@@ -332,6 +350,52 @@ function apply(ctx) {
               ok: false,
               path: pathValue,
               error: { code: error?.code ?? "git-status-failed", message: error instanceof Error ? error.message : String(error) }
+            });
+          }
+          return;
+        }
+
+        if (url.pathname === "/filetree/raw") {
+          const pathValue = url.searchParams.get("path") ?? "";
+          if (pathValue === "" || !isAbsolute(pathValue)) {
+            json(res, 400, { ok: false, error: { code: "invalid-path", message: "an absolute path is required" } });
+            return;
+          }
+          try {
+            const s = await stat(pathValue);
+            if (!s.isFile()) {
+              json(res, 400, { ok: false, error: { code: "not-a-file", message: "path is not a file" } });
+              return;
+            }
+            const type = contentTypeFor(pathValue);
+            res.setHeader("content-type", type);
+            res.setHeader("accept-ranges", "bytes");
+            res.setHeader("cache-control", "no-store");
+            const range = (req.headers.range ?? "").match(/bytes=(\d*)-(\d*)/);
+            const total = s.size;
+            if (range) {
+              const start = range[1] === "" ? Math.max(0, total - Number(range[2] || 0)) : Number(range[1]);
+              const end = range[2] === "" ? total - 1 : Math.min(Number(range[2]), total - 1);
+              if (start >= total || start > end) {
+                res.writeHead(416, { "content-range": "bytes */" + total });
+                res.end();
+                return;
+              }
+              res.writeHead(206, {
+                "content-range": "bytes " + start + "-" + end + "/" + total,
+                "content-length": end - start + 1
+              });
+              if (req.method === "HEAD") { res.end(); return; }
+              createReadStream(pathValue, { start, end }).pipe(res);
+            } else {
+              res.writeHead(200, { "content-length": total });
+              if (req.method === "HEAD") { res.end(); return; }
+              createReadStream(pathValue).pipe(res);
+            }
+          } catch (error) {
+            json(res, 404, {
+              ok: false,
+              error: { code: error?.code ?? "raw-failed", message: error instanceof Error ? error.message : String(error) }
             });
           }
           return;

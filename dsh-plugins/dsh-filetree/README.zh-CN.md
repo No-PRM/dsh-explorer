@@ -12,6 +12,7 @@
 | `GET /filetree/root` | 宿主进程的 `cwd`(`{ ok, cwd }`)。 |
 | `GET /filetree/read?path=<绝对路径>` | 读取文件用于预览:512 KB 上限(`truncated`)、NUL 字节二进制检测、UTF-8 内容。 |
 | `GET /filetree/search?path=<绝对路径>&q=<关键词>` | 递归按文件名搜索(有界:4000 次扫描 / 200 结果 / 深度 14;跳过 `.git` 和 node_modules)。 |
+| `GET /filetree/raw?path=<绝对路径>` | 为媒体预览流式输出文件(`image/*`、`video/*`、`audio/*`、PDF):正确 content-type、`Accept-Ranges` + `Range` 断点支持(206 分段响应,视频可拖动进度)。无大小上限。 |
 | `GET /filetree/gitstatus?path=<绝对路径>` | 供 git 装饰用的状态:`{ ok, git, root, entries: [{ path, status, x, y }], truncated? }`。状态字母 A/M/D/R/C/U/T(`I` = 忽略);通过 `rev-parse --show-toplevel` 向上找仓库根;忽略项来自折叠的 `--ignored` 扫描(即使忽略树巨大也很快);2 秒 TTL 缓存。非仓库/无 git → `{ git: false }`。 |
 
 - 只接受绝对路径(相对路径返回 `400 invalid-path`)。

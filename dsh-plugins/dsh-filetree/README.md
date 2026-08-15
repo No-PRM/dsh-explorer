@@ -14,6 +14,7 @@ bridge to the local filesystem and git.
 | `GET /filetree/root` | The host process `cwd` (`{ ok, cwd }`). |
 | `GET /filetree/read?path=<absolute>` | Read a file for preview: 512 KB cap (`truncated`), NUL-byte binary detection, UTF-8 content. |
 | `GET /filetree/search?path=<absolute>&q=<query>` | Recursive basename search (bounded: 4000 scans / 200 results / depth 14; skips `.git` + node_modules). |
+| `GET /filetree/raw?path=<absolute>` | Stream a file for media preview (`image/*`, `video/*`, `audio/*`, PDF): proper content-type, `Accept-Ranges` + `Range` support (206 partial content for video seeking). No size cap. |
 | `GET /filetree/gitstatus?path=<absolute>` | Git status for decorations: `{ ok, git, root, entries: [{ path, status, x, y }], truncated? }`. Status letters A/M/D/R/C/U/T (`I` = ignored); repo root found via `rev-parse --show-toplevel`; ignored entries from a collapsed `--ignored` pass (fast even with huge ignored trees); 2 s TTL cache. Non-repo / git-missing → `{ git: false }`. |
 
 - Only absolute paths are accepted (relative paths get `400 invalid-path`).
