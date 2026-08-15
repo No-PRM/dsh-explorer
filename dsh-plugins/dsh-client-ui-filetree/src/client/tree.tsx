@@ -149,9 +149,9 @@ function TreeRow({ row, hoverPath, onRowHover, activeGuide, onToggle, openPrevie
       >
         {renderGuides(row.depth)}
         <TypeIcon spec={fileIconSpec(row.name)} size={16} />
-        <span className={cls(styles.name, row.deleted && styles.nameDeleted)}>{row.name}</span>
-        {!row.deleted ? <span className={styles.size}>{formatSize(row.size)}</span> : null}
+        <span className={cls(styles.name, row.deleted && styles.nameDeleted, meta && styles[meta.cls as keyof typeof styles])}>{row.name}</span>
         {meta ? <span className={cls(styles.gitMark, styles[meta.cls as keyof typeof styles])} title={t(meta.key)}>{status}</span> : null}
+        {!row.deleted ? <span className={styles.size}>{formatSize(row.size)}</span> : null}
       </div>
     )
   }
