@@ -141,7 +141,8 @@ function GitDiff({ path, dark, t }: { path: string; dark: boolean; t: Translate 
 }
 
 export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, t }: PreviewPaneProps) {
-  const [diffMode, setDiffMode] = useState(false)
+  /* Default to the diff view when the file has git changes. */
+  const [diffMode, setDiffMode] = useState(canDiff)
   /* Follow the app's light/dark palette (body attribute flips on theme change). */
   const [dark, setDark] = useState(() => typeof document !== 'undefined' && document.body.hasAttribute('data-ds-dark-theme'))
   useEffect(() => {
@@ -155,7 +156,7 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, t
      which would wipe the dynamically-installed search extension and close the
      Ctrl+F panel on the next poll tick. Memoize so reconfigure only fires when
      the opened file changes. */
-  useEffect(() => { setDiffMode(false) }, [previewPath])
+  useEffect(() => { setDiffMode(canDiff) }, [previewPath, canDiff])
 
   const lang = useMemo(() => langFor(previewPath), [previewPath])
   /* Install the search extension statically with the panel at the top, matching
