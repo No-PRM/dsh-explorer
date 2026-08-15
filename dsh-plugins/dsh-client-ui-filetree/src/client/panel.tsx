@@ -69,6 +69,22 @@ function insertIntoComposer(text: string): boolean {
   return true
 }
 
+/** Insert a dragged reference, padded with spaces so it never glues to
+ *  neighbouring text (skipped when the adjacent char is already whitespace
+ *  or the line/field boundary). */
+function insertReference(rel: string): void {
+  const ta = findComposerTextarea()
+  let text = rel
+  if (ta) {
+    const at = ta.selectionStart ?? ta.value.length
+    const before = ta.value[at - 1]
+    const after = ta.value[at]
+    if (at > 0 && before !== undefined && !/\s/.test(before)) text = ' ' + text
+    if (after !== undefined && !/\s/.test(after)) text = text + ' '
+  }
+  insertIntoComposer(text)
+}
+
 export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTreePanelProps) {
   const [expanded, setExpanded] = useState<Set<string>>(loadExpandedSet)
   const [dirs, setDirs] = useState<Record<string, DirRecord>>({})
@@ -123,7 +139,7 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
       /* plain workspace-relative path (no @ prefix) + a removable chip */
       const rel = payload.rel
       setRefs((prev) => (prev.some((r) => r.rel === rel) ? prev : [...prev, { rel, kind: payload.kind === 'dir' ? 'dir' : 'file' }]))
-      insertIntoComposer(payload.rel)
+      insertReference(rel)
     }
     document.addEventListener('dragover', onDragOver)
     document.addEventListener('drop', onDrop)
