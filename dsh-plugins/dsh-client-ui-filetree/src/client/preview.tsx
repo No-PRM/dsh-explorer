@@ -178,13 +178,15 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, o
       const sel = view.state.selection.main
       if (sel.empty) return
       const pos = view.posAtCoords({ x: e.clientX, y: e.clientY })
-      if (pos === null || pos < sel.from || pos > sel.to) return
+      /* arm only when grabbing *inside* the selection (strictly, not on its
+         edges) — grabbing an edge stays CodeMirror's normal selection adjust */
+      if (pos === null || pos <= sel.from || pos >= sel.to) return
       e.preventDefault() /* keep CM from re-selecting on the drag */
       manualDrag.current = { x: e.clientX, y: e.clientY, from: sel.from, to: sel.to, dragging: false }
     }
     const onMouseMove = (e: MouseEvent) => {
       const m = manualDrag.current
-      if (m && !m.dragging && Math.hypot(e.clientX - m.x, e.clientY - m.y) > 4) m.dragging = true
+      if (m && !m.dragging && Math.hypot(e.clientX - m.x, e.clientY - m.y) > 8) m.dragging = true
     }
     const onMouseUp = (e: MouseEvent) => {
       const m = manualDrag.current
