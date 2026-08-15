@@ -23,8 +23,10 @@ export type FlatRow =
   | { key: string; path: string; depth: number; type: 'truncated' }
   | { key: string; path: string; depth: number; type: 'error'; message: string }
 
-/** VCS-internal directories hidden from the tree (VS Code files.exclude-like). */
-const HIDDEN_VCS_DIRS = new Set(['.git', '.svn', '.hg', 'CVS'])
+/** Entries hidden from the tree, matching VS Code's default files.exclude
+ *  (VCS-internal dirs + OS junk files). node_modules stays visible (grayed
+ *  when gitignored), exactly like the VS Code explorer. */
+const HIDDEN_ENTRIES = new Set(['.git', '.svn', '.hg', 'CVS', '.DS_Store', 'Thumbs.db'])
 
 /** Git statuses of files deleted from the working tree (parent dir -> rows). */
 export type DeletedByDir = Map<string, Array<{ name: string; path: string }>>
@@ -54,8 +56,8 @@ export function flattenTree(
        (dirs keep the host's order and are visited inline). */
     const files: Array<{ name: string; path: string; size: number; hidden: boolean; deleted: boolean }> = []
     for (const e of rec.entries) {
+      if (HIDDEN_ENTRIES.has(e.name)) continue
       if (e.kind === 'dir') {
-        if (HIDDEN_VCS_DIRS.has(e.name)) continue
         visit(joinPath(path, e.name), e.name, depth + 1)
       } else {
         files.push({ name: e.name, path: joinPath(path, e.name), size: e.size, hidden: e.hidden, deleted: false })
