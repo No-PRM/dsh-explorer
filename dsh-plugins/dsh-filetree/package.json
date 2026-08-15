@@ -1,0 +1,11 @@
+{
+  "name": "dsh-filetree",
+  "version": "0.1.0",
+  "description": "Host half of the collapsible real-time file-tree sidebar: serves /filetree/list (and /filetree/root) JSON over the dsh web server.",
+  "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "lib"
+  ],
+  "license": "MIT"
+}

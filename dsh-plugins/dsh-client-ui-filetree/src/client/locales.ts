@@ -1,0 +1,41 @@
+/** Simplified Chinese dictionary (the key-set source of truth). */
+export const zh = {
+  'section.title': '文件',
+  'refresh': '刷新',
+  'open': '打开文件树',
+  'close': '关闭文件树',
+  'loading': '加载中…',
+  'empty': '（空目录）',
+  'truncated': '（目录过大，仅显示部分）',
+  'noFolder': '未选择工作区目录',
+  'searchPlaceholder': '搜索文件…',
+  'searching': '搜索中…',
+  'noResults': '无匹配结果',
+  'clear': '清除',
+  'expandAll': '全部展开',
+  'collapseAll': '全部折叠',
+  'closePreview': '关闭预览',
+  'binaryFile': '二进制文件，暂不支持预览',
+  'previewTruncated': '（文件过大，仅显示前 512KB）',
+} as const
+
+/** English dictionary, checked complete against the zh key set. */
+export const en: Record<keyof typeof zh, string> = {
+  'section.title': 'Files',
+  'refresh': 'Refresh',
+  'open': 'Open file tree',
+  'close': 'Close file tree',
+  'loading': 'Loading…',
+  'empty': '(empty)',
+  'truncated': '(too large — showing a subset)',
+  'noFolder': 'No workspace folder selected',
+  'searchPlaceholder': 'Search files…',
+  'searching': 'Searching…',
+  'noResults': 'No matches',
+  'clear': 'Clear',
+  'expandAll': 'Expand all',
+  'collapseAll': 'Collapse all',
+  'closePreview': 'Close preview',
+  'binaryFile': 'Binary file — preview not supported',
+  'previewTruncated': '(file too large — showing first 512 KB)',
+}

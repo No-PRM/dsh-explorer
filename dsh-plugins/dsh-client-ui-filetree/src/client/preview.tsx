@@ -1,0 +1,141 @@
+/** File content preview: header + CodeMirror 6 read-only code viewer. */
+import { useEffect, useMemo, useState } from 'react'
+import CodeMirror from '@uiw/react-codemirror'
+import { StreamLanguage } from '@codemirror/language'
+import { search } from '@codemirror/search'
+import { javascript } from '@codemirror/lang-javascript'
+import { json } from '@codemirror/lang-json'
+import { css } from '@codemirror/lang-css'
+import { html } from '@codemirror/lang-html'
+import { markdown } from '@codemirror/lang-markdown'
+import { python } from '@codemirror/lang-python'
+import { sql } from '@codemirror/lang-sql'
+import { cpp } from '@codemirror/lang-cpp'
+import { java } from '@codemirror/lang-java'
+import { rust } from '@codemirror/lang-rust'
+import { go } from '@codemirror/lang-go'
+import { php } from '@codemirror/lang-php'
+import { yaml } from '@codemirror/legacy-modes/mode/yaml'
+import { shell } from '@codemirror/legacy-modes/mode/shell'
+import { powerShell } from '@codemirror/legacy-modes/mode/powershell'
+import { ruby } from '@codemirror/legacy-modes/mode/ruby'
+import { lua } from '@codemirror/legacy-modes/mode/lua'
+import { xml } from '@codemirror/legacy-modes/mode/xml'
+import { diff } from '@codemirror/legacy-modes/mode/diff'
+import { dockerFile } from '@codemirror/legacy-modes/mode/dockerfile'
+import { githubLight } from '@uiw/codemirror-theme-github'
+import { vscodeDark } from '@uiw/codemirror-theme-vscode'
+import type { Extension } from '@codemirror/state'
+import { IconCloseOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { Translate } from './types.ts'
+import { styles } from './styles.ts'
+import { basenameOf } from './constants.ts'
+import { fileIconSpec, TypeIcon } from './icons.tsx'
+
+export type PreviewState =
+  | { status: 'loading' }
+  | { status: 'done'; binary: boolean; content?: string; size?: number; truncated?: boolean }
+  | { status: 'error'; error: string }
+
+export interface PreviewPaneProps {
+  previewPath: string | null
+  preview: PreviewState | null
+  relPath: (p: string) => string
+  onClose: () => void
+  t: Translate
+}
+
+/** Extension → CodeMirror language extension (null = plain text). */
+function langFor(path: string | null): Extension | null {
+  if (!path) return null
+  const base = basenameOf(path).toLowerCase()
+  const ext = base.slice(base.lastIndexOf('.') + 1)
+  switch (ext) {
+    case 'js': case 'mjs': case 'cjs': return javascript()
+    case 'jsx': return javascript({ jsx: true })
+    case 'ts': case 'mts': case 'cts': return javascript({ typescript: true })
+    case 'tsx': return javascript({ jsx: true, typescript: true })
+    case 'json': return json()
+    case 'css': return css()
+    case 'scss': case 'sass': case 'less': return css()
+    case 'html': case 'htm': return html()
+    case 'md': case 'markdown': return markdown()
+    case 'py': case 'pyw': return python()
+    case 'sql': return sql()
+    case 'c': case 'h': case 'cpp': case 'cc': case 'cxx': case 'hpp': return cpp()
+    case 'java': return java()
+    case 'rs': return rust()
+    case 'go': return go()
+    case 'php': return php()
+    case 'yml': case 'yaml': return StreamLanguage.define(yaml)
+    case 'sh': case 'bash': case 'zsh': case 'fish': return StreamLanguage.define(shell)
+    case 'ps1': case 'cmd': case 'bat': return StreamLanguage.define(powerShell)
+    case 'rb': return StreamLanguage.define(ruby)
+    case 'lua': return StreamLanguage.define(lua)
+    case 'xml': case 'svg': case 'cshtml': return StreamLanguage.define(xml)
+    case 'diff': return StreamLanguage.define(diff)
+    case 'dockerfile': return StreamLanguage.define(dockerFile)
+    default: return null
+  }
+}
+
+export function PreviewPane({ previewPath, preview, relPath, onClose, t }: PreviewPaneProps) {
+  /* Follow the app's light/dark palette (body attribute flips on theme change). */
+  const [dark, setDark] = useState(() => typeof document !== 'undefined' && document.body.hasAttribute('data-ds-dark-theme'))
+  useEffect(() => {
+    const obs = new MutationObserver(() => setDark(document.body.hasAttribute('data-ds-dark-theme')))
+    obs.observe(document.body, { attributes: true, attributeFilter: ['data-ds-dark-theme'] })
+    return () => obs.disconnect()
+  }, [])
+
+  /* Stable identities for the CodeMirror props: @uiw/react-codemirror runs
+     StateEffect.reconfigure whenever extensions/basicSetup identity changes,
+     which would wipe the dynamically-installed search extension and close the
+     Ctrl+F panel on the next poll tick. Memoize so reconfigure only fires when
+     the opened file changes. */
+  const lang = useMemo(() => langFor(previewPath), [previewPath])
+  /* Install the search extension statically with the panel at the top, matching
+     the VS Code find-widget position (basicSetup only ships the keymap). */
+  const cmExtensions = useMemo(() => [search({ top: true }), ...(lang ? [lang] : [])], [lang])
+  const basicSetup = useMemo(() => ({ foldGutter: false, highlightActiveLine: false, highlightActiveLineGutter: false }), [])
+
+  let body: React.ReactNode
+  if (preview === null || preview.status === 'loading') {
+    body = <div className={styles.message}>{t('loading')}</div>
+  } else if (preview.status === 'error') {
+    body = <div className={styles.error}>{preview.error}</div>
+  } else if (preview.binary) {
+    body = <div className={styles.message}>{t('binaryFile')}</div>
+  } else {
+    const content = preview.content ?? ''
+    /* lang via useMemo above */
+    body = (
+      <div className={styles.previewCm}>
+        <CodeMirror
+          key={previewPath ?? 'preview'}
+          value={content}
+          readOnly
+          height="100%"
+          theme={dark ? vscodeDark : githubLight}
+          extensions={cmExtensions}
+          basicSetup={basicSetup}
+        />
+        {preview.truncated ? <div className={styles.message}>{t('previewTruncated')}</div> : null}
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.preview}>
+      <div className={styles.previewHeader}>
+        {previewPath ? <TypeIcon spec={fileIconSpec(basenameOf(previewPath))} size={16} /> : null}
+        <span className={styles.previewName} title={previewPath ?? undefined}>{previewPath ? basenameOf(previewPath) : ''}</span>
+        {previewPath ? <span className={styles.previewPath}>{relPath(previewPath)}</span> : null}
+        <button type="button" className={styles.iconButton} aria-label={t('closePreview')} title={t('closePreview')} onClick={onClose}>
+          <IconCloseOutline16 size={14} />
+        </button>
+      </div>
+      <div className={styles.previewBody}>{body}</div>
+    </div>
+  )
+}
