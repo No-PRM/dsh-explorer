@@ -29,6 +29,9 @@ plugin (no modifications inside the shipped dsh packages, survives upgrades).
   from the host `/filetree/raw` (Range-enabled, video seeking works)
 - 512 KB cap + binary detection for text, 1.2 s live refresh
 - Expand-all / collapse-all (bounded: 150 dirs × depth 6), manual refresh
+- **Drag & drop**: drag any file/folder row into the chat composer to insert a
+  Codex-style `@relative-path` reference (works with `dsh-at-file`'s host
+  expansion when installed)
 
 ## Engineering setup (official toolchain)
 

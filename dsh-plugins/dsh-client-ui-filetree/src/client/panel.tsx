@@ -11,7 +11,7 @@ import {
   cls, dirnameOf, loadExpandedSet, persistExpanded, POLL_MS,
 } from './constants.ts'
 import { styles } from './styles.ts'
-import { flattenTree, TreeList, type DeletedByDir } from './tree.tsx'
+import { DRAG_MIME, flattenTree, TreeList, type DeletedByDir } from './tree.tsx'
 import { mediaKind, PreviewPane, type PreviewState } from './preview.tsx'
 import { fetchDir, bfsSearch, fetchGitStatus } from './fetch.ts'
 import { fileIconSpec, IconCollapseAll, IconExpandAll, TypeIcon } from './icons.tsx'
@@ -35,6 +35,38 @@ const EMPTY_SEARCH: SearchUiState = { q: '', status: 'idle', results: [], error:
 /** Stable empty containers so TreeList props keep identity between renders. */
 const EMPTY_GIT_MAP: Map<string, string> = new Map()
 const EMPTY_GIT_SET: Set<string> = new Set()
+
+/** Find the chat composer textarea (the app's one big textarea). */
+function findComposerTextarea(): HTMLTextAreaElement | null {
+  const active = document.activeElement
+  if (active instanceof HTMLTextAreaElement) return active
+  const tas = Array.from(document.querySelectorAll<HTMLTextAreaElement>('textarea'))
+  if (tas.length === 0) return null
+  tas.sort((a, b) => b.getBoundingClientRect().height - a.getBoundingClientRect().height)
+  return tas[0]
+}
+
+/** Insert text into the composer at the caret. Uses the native value setter so
+ *  React's controlled state picks the change up, then fires 'input'. */
+function insertIntoComposer(text: string): boolean {
+  const ta = findComposerTextarea()
+  if (!ta) return false
+  ta.focus()
+  const start = ta.selectionStart ?? ta.value.length
+  const end = ta.selectionEnd ?? start
+  const next = ta.value.slice(0, start) + text + ta.value.slice(end)
+  const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+  if (setter) {
+    setter.call(ta, next)
+    const pos = start + text.length
+    ta.setSelectionRange(pos, pos)
+    ta.dispatchEvent(new Event('input', { bubbles: true }))
+    return true
+  }
+  ta.value = next
+  ta.dispatchEvent(new Event('input', { bubbles: true }))
+  return true
+}
 
 export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTreePanelProps) {
   const [expanded, setExpanded] = useState<Set<string>>(loadExpandedSet)
@@ -72,6 +104,29 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
     if (item && item.path) return item.path
     return null
   }, [current, byId, wsItems, recentId])
+
+  /* Drag & drop: tree rows carry the @-mention token; dropping anywhere
+     inserts it into the chat composer (React-safe). */
+  useEffect(() => {
+    const hasPayload = (e: DragEvent) => e.dataTransfer != null && Array.from(e.dataTransfer.types).includes(DRAG_MIME)
+    const onDragOver = (e: DragEvent) => { if (hasPayload(e)) e.preventDefault() }
+    const onDrop = (e: DragEvent) => {
+      if (!hasPayload(e)) return
+      e.preventDefault()
+      const raw = e.dataTransfer?.getData(DRAG_MIME)
+      if (!raw) return
+      let payload: { path?: string; rel?: string; kind?: string }
+      try { payload = JSON.parse(raw) } catch { return }
+      if (!payload.rel) return
+      insertIntoComposer('@' + payload.rel)
+    }
+    document.addEventListener('dragover', onDragOver)
+    document.addEventListener('drop', onDrop)
+    return () => {
+      document.removeEventListener('dragover', onDragOver)
+      document.removeEventListener('drop', onDrop)
+    }
+  }, [])
 
   /* Reset git decorations when the workspace folder changes. */
   useEffect(() => {
@@ -436,6 +491,7 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
           : (
             <TreeList
               rows={rows}
+              rootPath={rootPath}
               onRowHover={setHoverPath}
               activeGuide={activeGuide}
               onToggle={toggleDir}
