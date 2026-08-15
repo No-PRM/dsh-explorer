@@ -29,9 +29,10 @@ plugin (no modifications inside the shipped dsh packages, survives upgrades).
   from the host `/filetree/raw` (Range-enabled, video seeking works)
 - 512 KB cap + binary detection for text, 1.2 s live refresh
 - Expand-all / collapse-all (bounded: 150 dirs × depth 6), manual refresh
-- **Drag & drop**: drag any file/folder row into the chat composer to insert a
-  Codex-style `@relative-path` reference (works with `dsh-at-file`'s host
-  expansion when installed)
+- **Drag & drop**: drag any file/folder row into the chat composer — a plain
+  workspace-relative path is inserted at the caret and a removable reference
+  chip (file/folder icon + path + ×) appears above the composer, synced with
+  the draft (auto-dismisses when the text is deleted or the message is sent)
 
 ## Engineering setup (official toolchain)
 

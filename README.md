@@ -12,7 +12,7 @@ The plugins only add UI and a few read-only routes. Nothing in the shipped dsh p
 - VS Code-style indent guides, hover highlights the active line
 - Git status at a glance: M/A/U/D/R letters in a right-aligned column, tinted filenames, dirty dots on folders, struck-through rows for deleted files, gitignored entries dimmed
 - Click a file to preview it — text opens in CodeMirror (Ctrl+F gives a VS Code-like find bar), images/video/audio/PDF play inline
-- Drag any file or folder into the chat input to drop in a `@relative/path` reference
+- Drag any file or folder into the chat input — inserts a plain relative path and shows a removable reference chip above the composer
 - Search (skips .git and node_modules), expand/collapse-all, auto-refresh every 1.2 s
 
 ## Two packages

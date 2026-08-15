@@ -12,6 +12,7 @@ import {
 } from './constants.ts'
 import { styles } from './styles.ts'
 import { DRAG_MIME, flattenTree, TreeList, type DeletedByDir } from './tree.tsx'
+import { updateChipBar } from './chips.ts'
 import { mediaKind, PreviewPane, type PreviewState } from './preview.tsx'
 import { fetchDir, bfsSearch, fetchGitStatus } from './fetch.ts'
 import { fileIconSpec, IconCollapseAll, IconExpandAll, TypeIcon } from './icons.tsx'
@@ -78,6 +79,7 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
   const [previewPath, setPreviewPath] = useState<string | null>(null)
   const [preview, setPreview] = useState<PreviewState | null>(null)
   const [git, setGit] = useState<{ byPath: Map<string, string>; dirtyDirs: Set<string>; deletedByDir: DeletedByDir; ignored: Set<string> } | null>(null)
+  const [refs, setRefs] = useState<Array<{ rel: string; kind: string }>>([])
 
   const previewPathRef = useRef<string | null>(null)
   const dirsRef = useRef<Record<string, DirRecord>>({})
@@ -118,7 +120,10 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
       let payload: { path?: string; rel?: string; kind?: string }
       try { payload = JSON.parse(raw) } catch { return }
       if (!payload.rel) return
-      insertIntoComposer('@' + payload.rel)
+      /* plain workspace-relative path (no @ prefix) + a removable chip */
+      const rel = payload.rel
+      setRefs((prev) => (prev.some((r) => r.rel === rel) ? prev : [...prev, { rel, kind: payload.kind === 'dir' ? 'dir' : 'file' }]))
+      insertIntoComposer(payload.rel)
     }
     document.addEventListener('dragover', onDragOver)
     document.addEventListener('drop', onDrop)
@@ -126,6 +131,53 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
       document.removeEventListener('dragover', onDragOver)
       document.removeEventListener('drop', onDrop)
     }
+  }, [])
+
+  /* Reference chips: render above the composer, re-measure while visible. */
+  const removeRef = useCallback((rel: string) => {
+    const ta = findComposerTextarea()
+    if (ta) {
+      const idx = ta.value.indexOf(rel)
+      if (idx !== -1) {
+        const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+        const next = ta.value.slice(0, idx) + ta.value.slice(idx + rel.length)
+        if (setter) {
+          setter.call(ta, next)
+          ta.dispatchEvent(new Event('input', { bubbles: true }))
+        } else {
+          ta.value = next
+          ta.dispatchEvent(new Event('input', { bubbles: true }))
+        }
+      }
+    }
+    setRefs((prev) => prev.filter((r) => r.rel !== rel))
+  }, [])
+
+  useEffect(() => {
+    if (refs.length === 0) { updateChipBar([], removeRef); return }
+    const render = () => updateChipBar(refs, removeRef)
+    render()
+    window.addEventListener('resize', render)
+    window.addEventListener('scroll', render, true)
+    const t = window.setInterval(render, 500)
+    return () => {
+      window.removeEventListener('resize', render)
+      window.removeEventListener('scroll', render, true)
+      window.clearInterval(t)
+      updateChipBar([], removeRef)
+    }
+  }, [refs, removeRef])
+
+  /* Drop chips whose path text vanished from the composer (user deleted it or
+     the message was sent). */
+  useEffect(() => {
+    const onInput = (e: Event) => {
+      const ta = e.target
+      if (!(ta instanceof HTMLTextAreaElement)) return
+      setRefs((prev) => (prev.length === 0 ? prev : prev.filter((r) => ta.value.includes(r.rel))))
+    }
+    document.addEventListener('input', onInput, true)
+    return () => document.removeEventListener('input', onInput, true)
   }, [])
 
   /* Reset git decorations when the workspace folder changes. */
