@@ -29,14 +29,13 @@ Both follow the official dsh plugin contract. Wiring and deployment details live
 
 ## Install
 
-You need both halves. One-line bundle install (the repo root is an umbrella bundle):
+You need both halves. Bundle install (monorepo — one command per package):
 
 ```bash
-dsh plugin --profile web add github:No-PRM/dsh-explorer
+dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-explorer"
+dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-client-ui-explorer"
 # restart dsh
 ```
-
-(Split installs, if you only want one half: `github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-explorer` and `...&path:/dsh-plugins/dsh-client-ui-explorer`.)
 
 *(Dev machine: keep the junction + `cordis.patch.yml` insert-row setup — don't run the bundle commands in the same profile.)*
 

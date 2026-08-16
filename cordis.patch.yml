@@ -1,6 +1,0 @@
-# dsh-explorer umbrella bundle: mounts both plugin rows.
-- insert:
-    - id: explorer
-      name: dsh-explorer
-    - id: ui-explorer
-      name: dsh-client-ui-explorer
