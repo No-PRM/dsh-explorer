@@ -1,6 +1,6 @@
 import { createReadStream } from "node:fs";
 import { readFile, readdir, stat } from "node:fs/promises";
-import { dirname, isAbsolute, join, relative as pathRelative } from "node:path";
+import { dirname, isAbsolute, join, relative as pathRelative, sep } from "node:path";
 import { execFile } from "node:child_process";
 
 /**
@@ -243,6 +243,16 @@ function json(res, status, payload) {
  * @param ctx - host plugin context with the webServer service.
  */
 function apply(ctx) {
+  // Workspace-scope guard: the GUI may only read inside a session workspace
+  // (falls back to the process cwd when no workspace registry is present).
+  const workspaceRegistry = ctx.get("workspaceRegistry") ?? ctx.get("workspace");
+  const roots = workspaceRegistry !== undefined
+    ? workspaceRegistry.list().map((workspace) => workspace.path)
+    : [process.cwd()];
+  const isAllowedPath = (pathValue) => roots.some((root) => {
+    const prefix = root.endsWith(sep) ? root : root + sep;
+    return pathValue === root || pathValue.startsWith(prefix);
+  });
   ctx.effect(() => ctx.webServer.register({
     kind: "prefix",
     path: "/filetree",
@@ -250,7 +260,7 @@ function apply(ctx) {
       try {
         const url = new URL(req.url ?? "/", "http://localhost");
         if (url.pathname === "/filetree/root") {
-          json(res, 200, { ok: true, cwd: process.cwd() });
+          json(res, 200, { ok: true, cwd: roots[0] ?? process.cwd() });
           return;
         }
         if (url.pathname === "/filetree/list") {
@@ -260,6 +270,10 @@ function apply(ctx) {
               ok: false,
               error: { code: "invalid-path", message: "an absolute path is required" }
             });
+            return;
+          }
+          if (!isAllowedPath(pathValue)) {
+            json(res, 403, { ok: false, error: { code: "outside-workspace", message: "path is outside the current session workspace" } });
             return;
           }
           try {
@@ -281,6 +295,10 @@ function apply(ctx) {
           const pathValue = url.searchParams.get("path") ?? "";
           if (pathValue === "" || !isAbsolute(pathValue)) {
             json(res, 400, { ok: false, error: { code: "invalid-path", message: "an absolute path is required" } });
+            return;
+          }
+          if (!isAllowedPath(pathValue)) {
+            json(res, 403, { ok: false, error: { code: "outside-workspace", message: "path is outside the current session workspace" } });
             return;
           }
           try {
@@ -316,6 +334,10 @@ function apply(ctx) {
             json(res, 400, { ok: false, error: { code: "invalid-path", message: "an absolute path is required" } });
             return;
           }
+          if (!isAllowedPath(pathValue)) {
+            json(res, 403, { ok: false, error: { code: "outside-workspace", message: "path is outside the current session workspace" } });
+            return;
+          }
           if (q === "" || q.length > 200) {
             json(res, 400, { ok: false, error: { code: "invalid-query", message: "a non-blank query of at most 200 chars is required" } });
             return;
@@ -342,6 +364,10 @@ function apply(ctx) {
             json(res, 400, { ok: false, error: { code: "invalid-path", message: "an absolute path is required" } });
             return;
           }
+          if (!isAllowedPath(pathValue)) {
+            json(res, 403, { ok: false, error: { code: "outside-workspace", message: "path is outside the current session workspace" } });
+            return;
+          }
           try {
             const result = await gitStatus(pathValue);
             json(res, 200, { ok: true, path: pathValue, ...result });
@@ -359,6 +385,10 @@ function apply(ctx) {
           const pathValue = url.searchParams.get("path") ?? "";
           if (pathValue === "" || !isAbsolute(pathValue)) {
             json(res, 400, { ok: false, error: { code: "invalid-path", message: "an absolute path is required" } });
+            return;
+          }
+          if (!isAllowedPath(pathValue)) {
+            json(res, 403, { ok: false, error: { code: "outside-workspace", message: "path is outside the current session workspace" } });
             return;
           }
           try {
@@ -405,6 +435,10 @@ function apply(ctx) {
           const pathValue = url.searchParams.get("path") ?? "";
           if (pathValue === "" || !isAbsolute(pathValue)) {
             json(res, 400, { ok: false, error: { code: "invalid-path", message: "an absolute path is required" } });
+            return;
+          }
+          if (!isAllowedPath(pathValue)) {
+            json(res, 403, { ok: false, error: { code: "outside-workspace", message: "path is outside the current session workspace" } });
             return;
           }
           try {
