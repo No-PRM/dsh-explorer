@@ -29,13 +29,14 @@
 
 ## 安装
 
-两个都要。一行命令 bundle 安装:
+两个都要。一行命令 bundle 安装(仓库根是伞形包):
 
 ```bash
-dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-explorer"
-dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-client-ui-explorer"
+dsh plugin --profile web add github:No-PRM/dsh-explorer
 # 重启 dsh
 ```
+
+(分开安装、只想装一半:`github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-explorer` 和 `...&path:/dsh-plugins/dsh-client-ui-explorer`。)
 
 *(开发机:保持 junction + `cordis.patch.yml` insert 行,别在同一 profile 跑 bundle 命令。)*
 

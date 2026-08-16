@@ -36,8 +36,7 @@
     "watch": "tsdown --watch",
     "dev": "node scripts/dev.mjs",
     "typecheck": "tsc --noEmit",
-    "types": "node scripts/types.mjs",
-    "prepare": "npm run bundle && npm run types"
+    "types": "node scripts/types.mjs"
   },
   "license": "MIT",
   "peerDependencies": {
