@@ -6,6 +6,14 @@
 
 插件只加 UI 和几条只读路由,不碰 dsh 自带的包,升级一般不会出问题。
 
+## 安装(两条命令 —— monorepo)
+
+```bash
+dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-explorer"
+dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-client-ui-explorer"
+# 重启 dsh
+```
+
 ![dsh-explorer 文件树](assets/screenshot.png)
 
 ## 功能

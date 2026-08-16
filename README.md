@@ -6,6 +6,14 @@ A file-tree sidebar for the DeepSeek Harness web UI. A blue round button on the 
 
 The plugins only add UI and a few read-only routes. Nothing in the shipped dsh packages is touched, so dsh updates shouldn't break anything.
 
+## Install (two commands — monorepo)
+
+```bash
+dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-explorer"
+dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/dsh-client-ui-explorer"
+# restart dsh
+```
+
 ![dsh-explorer file tree](assets/screenshot.png)
 
 ## What you get
