@@ -6,6 +6,12 @@ Host half of the collapsible real-time file-tree sidebar for the dsh web GUI.
 Read-only JSON endpoints over the dsh web server — the browser client's only
 bridge to the local filesystem and git.
 
+All path-taking endpoints are scoped to the session workspace roots (via the
+`workspaceRegistry` / `workspace` service when present, otherwise the process
+`cwd`): paths outside those roots are rejected with `403 outside-workspace`.
+The GUI cannot browse arbitrary local files, matching the built-in workspace
+panel's trust model.
+
 ## Endpoints
 
 | Endpoint | Purpose |
