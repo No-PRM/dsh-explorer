@@ -53,7 +53,7 @@ export interface PreviewPaneProps {
   /** File has a git status (so a HEAD diff exists to compare). */
   canDiff: boolean
   /** Manual selection-drag -> add a reference to the composer. */
-  onReference?: (rel: string, kind: string) => void
+  onReference?: (ref: { text: string; label: string; kind: string }) => void
   t: Translate
 }
 
@@ -169,7 +169,7 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, o
      threshold commits to a drag that inserts a structured
      relative/path:from-to reference; a click (no movement) still moves the
      caret to the click position. */
-  const manualDrag = useRef<{ x: number; y: number; from: number; to: number; dragging: boolean; display: string } | null>(null)
+  const manualDrag = useRef<{ x: number; y: number; from: number; to: number; dragging: boolean; label: string; text: string } | null>(null)
   const dragGhost = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
     const onMouseDown = (e: MouseEvent) => {
@@ -185,8 +185,10 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, o
       e.preventDefault() /* keep CM from re-selecting on the drag */
       const fromLine = view.state.doc.lineAt(sel.from).number
       const toLine = view.state.doc.lineAt(sel.to).number
-      const display = relPath(previewPath) + ':' + fromLine + (toLine > fromLine ? '-' + toLine : '')
-      manualDrag.current = { x: e.clientX, y: e.clientY, from: sel.from, to: sel.to, dragging: false, display }
+      const rel = relPath(previewPath)
+      const label = rel + ':' + fromLine + (toLine > fromLine ? '-' + toLine : '')
+      const text = '<reference path=\'' + rel + '\' lines=\'' + fromLine + (toLine > fromLine ? '-' + toLine : '') + '\' />'
+      manualDrag.current = { x: e.clientX, y: e.clientY, from: sel.from, to: sel.to, dragging: false, label, text }
     }
     const onMouseMove = (e: MouseEvent) => {
       const m = manualDrag.current
@@ -199,7 +201,7 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, o
           if (!dragGhost.current) {
             const g = document.createElement('div')
             g.className = 'ftr-dragGhost'
-            g.textContent = m.display
+            g.textContent = m.label
             document.body.appendChild(g)
             dragGhost.current = g
           }
@@ -227,7 +229,7 @@ export function PreviewPane({ previewPath, preview, relPath, onClose, canDiff, o
         return
       }
       /* fill only when released over the composer */
-      if (isOverComposer(e.clientX, e.clientY)) onReference?.(m.display, 'file')
+      if (isOverComposer(e.clientX, e.clientY)) onReference?.({ text: m.text, label: m.label, kind: 'file' })
     }
     document.addEventListener('mousedown', onMouseDown, true)
     document.addEventListener('mousemove', onMouseMove, true)

@@ -72,6 +72,13 @@ function insertIntoComposer(text: string): boolean {
 /** Insert a dragged reference, padded with spaces so it never glues to
  *  neighbouring text (skipped when the adjacent char is already whitespace
  *  or the line/field boundary). */
+/** XML-tagged reference — unambiguous for the model (mirrors dsh-at-file's
+ *  <workspace-reference> convention). */
+function formatRef(path: string, kind: string, lines?: string): string {
+  const attrs = lines ? 'path="' + path + '" lines="' + lines + '"' : 'path="' + path + '"'
+  return '<reference ' + attrs + ' />'
+}
+
 function insertReference(rel: string): void {
   const ta = findComposerTextarea()
   if (!ta) return
@@ -97,7 +104,7 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
   const [previewPath, setPreviewPath] = useState<string | null>(null)
   const [preview, setPreview] = useState<PreviewState | null>(null)
   const [git, setGit] = useState<{ byPath: Map<string, string>; dirtyDirs: Set<string>; deletedByDir: DeletedByDir; ignored: Set<string> } | null>(null)
-  const [refs, setRefs] = useState<Array<{ rel: string; kind: string }>>([])
+  const [refs, setRefs] = useState<Array<{ text: string; label: string; kind: string }>>([])
 
   const previewPathRef = useRef<string | null>(null)
   const dirsRef = useRef<Record<string, DirRecord>>({})
@@ -172,8 +179,10 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
       if (!payload.rel) return
       /* plain workspace-relative path (no @ prefix) + a removable chip */
       const rel = payload.rel
-      setRefs((prev) => (prev.some((r) => r.rel === rel) ? prev : [...prev, { rel, kind: payload.kind === 'dir' ? 'dir' : 'file' }]))
-      insertReference(rel)
+      const kind = payload.kind === 'dir' ? 'dir' : 'file'
+      const text = formatRef(rel, kind)
+      setRefs((prev) => (prev.some((r) => r.text === text) ? prev : [...prev, { text, label: rel, kind }]))
+      insertReference(text)
     }
     document.addEventListener('dragover', onDragOver)
     document.addEventListener('drop', onDrop)
@@ -186,13 +195,13 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
   }, [])
 
   /* Reference chips: render above the composer, re-measure while visible. */
-  const removeRef = useCallback((rel: string) => {
+  const removeRef = useCallback((text: string) => {
     const ta = findComposerTextarea()
     if (ta) {
-      const idx = ta.value.indexOf(rel)
+      const idx = ta.value.indexOf(text)
       if (idx !== -1) {
         const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
-        const next = ta.value.slice(0, idx) + ta.value.slice(idx + rel.length)
+        const next = ta.value.slice(0, idx) + ta.value.slice(idx + text.length)
         if (setter) {
           setter.call(ta, next)
           ta.dispatchEvent(new Event('input', { bubbles: true }))
@@ -202,7 +211,7 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
         }
       }
     }
-    setRefs((prev) => prev.filter((r) => r.rel !== rel))
+    setRefs((prev) => prev.filter((r) => r.text !== text))
   }, [])
 
   useEffect(() => {
@@ -214,7 +223,7 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
          needing a click. */
       const ta = findComposerTextarea()
       if (ta) {
-        const alive = refs.filter((r) => ta.value.includes(r.rel))
+        const alive = refs.filter((r) => ta.value.includes(r.text))
         if (alive.length !== refs.length) { setRefs(alive); return }
       }
       updateChipBar(refs, removeRef)
@@ -237,7 +246,7 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
     const onInput = (e: Event) => {
       const ta = e.target
       if (!(ta instanceof HTMLTextAreaElement)) return
-      setRefs((prev) => (prev.length === 0 ? prev : prev.filter((r) => ta.value.includes(r.rel))))
+      setRefs((prev) => (prev.length === 0 ? prev : prev.filter((r) => ta.value.includes(r.text))))
     }
     document.addEventListener('input', onInput, true)
     return () => document.removeEventListener('input', onInput, true)
@@ -606,9 +615,9 @@ export function FileTreePanel({ useSessions, useWorkspaces, t, active }: FileTre
         relPath={relPath}
         onClose={closePreview}
         canDiff={previewPath != null && git != null && git.byPath.has(previewPath)}
-        onReference={(rel, kind) => {
-          setRefs((prev) => (prev.some((r) => r.rel === rel) ? prev : [...prev, { rel, kind }]))
-          insertReference(rel)
+        onReference={(ref) => {
+          setRefs((prev) => (prev.some((r) => r.text === ref.text) ? prev : [...prev, ref]))
+          insertReference(ref.text)
         }}
         t={t}
       />

@@ -4,7 +4,10 @@
  *  appended to document.body and rebuilt on each update. */
 
 interface RefChip {
-  rel: string
+  /** Exact text inserted into the composer (used for sync + removal). */
+  text: string
+  /** Human-readable chip label. */
+  label: string
   kind: string
 }
 
@@ -74,13 +77,13 @@ export function updateChipBar(refs: RefChip[], onRemove: (rel: string) => void):
     dot.className = 'ftr-chipDot' + (ref.kind === 'dir' ? ' isDir' : ' isFile')
     const name = document.createElement('span')
     name.className = 'ftr-chipName'
-    name.textContent = ref.rel
-    name.title = ref.rel
+    name.textContent = ref.label
+    name.title = ref.label
     const x = document.createElement('button')
     x.className = 'ftr-chipRemove'
     x.textContent = '×'
     x.title = '移除引用'
-    x.addEventListener('click', () => onRemove(ref.rel))
+    x.addEventListener('click', () => onRemove(ref.text))
     chip.append(dot, name, x)
     container.appendChild(chip)
   }

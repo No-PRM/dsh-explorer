@@ -23,7 +23,7 @@ dsh plugin --profile web add "github:No-PRM/dsh-explorer#main&path:/dsh-plugins/
 - Git status at a glance: M/A/U/D/R letters in a right-aligned column, tinted filenames, dirty dots on folders, struck-through rows for deleted files, gitignored entries dimmed
 - Modified files get a **git diff view** (HEAD vs working tree, side-by-side) right in the preview
 - Click a file to preview it — text opens in CodeMirror (Ctrl+F gives a VS Code-like find bar), images/video/audio/PDF play inline
-- Drag any file/folder (or selected code from the preview, which becomes `path:from-to`) into the chat input — inserts a reference and shows a removable chip above the composer
+- Drag any file/folder (or selected code from the preview) into the chat input — inserts an XML-tagged reference (`<reference path="…" lines="…" />`) and shows a removable chip above the composer
 - Search (skips .git and node_modules), expand/collapse-all, auto-refresh every 1.2 s
 
 ## Two packages
